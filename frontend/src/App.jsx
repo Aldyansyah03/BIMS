@@ -5,6 +5,7 @@ import { useAuth } from './hooks/useAuth'
 import Login from './pages/Login'
 import Main from './pages/Main'
 import Register from './pages/Register'
+import AdminDashboard from './pages/AdminDashboard'
 
 // Placeholder pages — akan dibuat di feature branch berikutnya
 const Placeholder = ({ name }) => (
@@ -59,7 +60,7 @@ function AppRoutes() {
         path="/admin/dashboard"
         element={
           <ProtectedRoute allowedRoles={['admin_bimbel']}>
-            <Placeholder name="Admin Dashboard" />
+            <AdminDashboard />
           </ProtectedRoute>
         }
       />
