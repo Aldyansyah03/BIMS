@@ -4,6 +4,7 @@ import { useAuth } from './hooks/useAuth'
 
 import Login from './pages/Login'
 import Main from './pages/Main'
+import Register from './pages/Register'
 
 // Placeholder pages — akan dibuat di feature branch berikutnya
 const Placeholder = ({ name }) => (
@@ -41,6 +42,7 @@ function AppRoutes() {
       {/* Public */}
       <Route path="/" element={<Main />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
 
       {/* Super Admin */}
       <Route
