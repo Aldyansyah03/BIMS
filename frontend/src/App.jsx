@@ -3,6 +3,7 @@ import { AuthProvider } from './context/AuthContext'
 import { useAuth } from './hooks/useAuth'
 
 import Login from './pages/Login'
+import Main from './pages/Main'
 
 // Placeholder pages — akan dibuat di feature branch berikutnya
 const Placeholder = ({ name }) => (
@@ -38,7 +39,7 @@ function AppRoutes() {
   return (
     <Routes>
       {/* Public */}
-      <Route path="/" element={<Placeholder name="Landing Page" />} />
+      <Route path="/" element={<Main />} />
       <Route path="/login" element={<Login />} />
 
       {/* Super Admin */}
