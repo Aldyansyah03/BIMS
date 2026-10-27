@@ -7,6 +7,7 @@ import Main from './pages/Main'
 import Register from './pages/Register'
 import AdminDashboard from './pages/AdminDashboard'
 import AdminClasses from './pages/AdminClasses'
+import TutorClass from './pages/TutorClass'
 
 // Placeholder pages — akan dibuat di feature branch berikutnya
 const Placeholder = ({ name }) => (
@@ -79,7 +80,7 @@ function AppRoutes() {
         path="/tutor"
         element={
           <ProtectedRoute allowedRoles={['tutor']}>
-            <Placeholder name="Tutor" />
+            <TutorClass />
           </ProtectedRoute>
         }
       />
