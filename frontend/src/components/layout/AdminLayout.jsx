@@ -34,9 +34,9 @@ export default function AdminLayout({ children, lang, setLang }) {
   const navItems = NAV_ITEMS[lang]
 
   return (
-    <div className="min-h-screen bg-[#F3F6FA] font-['Plus_Jakarta_Sans',system-ui,sans-serif] text-[#1F2937] flex flex-col">
+    <div className="h-screen bg-[#F3F6FA] font-['Plus_Jakarta_Sans',system-ui,sans-serif] text-[#1F2937] flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="bg-white border-b border-[#E6E6EA] sticky top-0 z-40">
+      <header className="bg-white border-b border-[#E6E6EA] flex-none z-40">
         <div className="px-6 py-3 flex flex-wrap items-center gap-3 gap-x-5">
           <Link to="/" className="flex items-center no-underline flex-none">
             <img src="/logo.png" alt="BIMS" className="h-10 w-auto object-contain" />
@@ -70,11 +70,11 @@ export default function AdminLayout({ children, lang, setLang }) {
         </div>
       </header>
 
-      <div className="flex flex-1">
+      <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
         <nav
           aria-label="Admin"
-          className="w-[220px] flex-none bg-white border-r border-[#E6E6EA] p-4 flex flex-col gap-1 sticky top-[61px] h-[calc(100vh-61px)] overflow-y-auto"
+          className="w-[220px] flex-none bg-white border-r border-[#E6E6EA] p-4 flex flex-col gap-1 overflow-y-auto"
         >
           {navItems.map((item) => {
             const active = location.pathname === item.href
@@ -98,7 +98,7 @@ export default function AdminLayout({ children, lang, setLang }) {
         </nav>
 
         {/* Main content */}
-        <main className="flex-1 min-w-0 p-8">
+        <main className="flex-1 min-w-0 p-8 overflow-y-auto">
           {children}
         </main>
       </div>
