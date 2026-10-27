@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { mockRegister } from '../mock/register'
-// Nanti ganti dengan:
-// import api from '../services/api'
+import api from '../services/api'
+// mock tidak dipakai lagi
 
 const PLANS = ['Basic', 'Standard', 'Pro']
 
@@ -102,20 +101,26 @@ export default function Register() {
 
     setLoading(true)
     try {
-      const res = await mockRegister({
-        bimbel_name: form.bimbel_name,
-        city: form.city,
-        phone: form.phone,
-        workspace: form.workspace,
-        admin_name: form.admin_name,
+      const response = await api.post('/register', {
+        name: form.admin_name,
         email: form.email,
         password: form.password,
+        password_confirmation: form.password,
+        tenant_name: form.bimbel_name,
+        tenant_slug: form.workspace,
+      })
+      const result = response.data
+      if (!result.success) throw new Error(result.message || 'Pendaftaran gagal.')
+      setResult({
+        bimbel_name: result.data.tenant.name,
+        email: result.data.user.email,
+        workspace: result.data.tenant.slug,
         plan,
       })
-      setResult(res.data)
       setDone(true)
     } catch (err) {
-      setError(err.message || 'Pendaftaran gagal.')
+      const msg = err.response?.data?.message || err.message || 'Pendaftaran gagal.'
+      setError(msg)
     } finally {
       setLoading(false)
     }

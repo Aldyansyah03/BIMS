@@ -8,6 +8,9 @@ import Register from './pages/Register'
 import AdminDashboard from './pages/AdminDashboard'
 import AdminClasses from './pages/AdminClasses'
 import TutorClass from './pages/TutorClass'
+import StudentHome from './pages/StudentHome'
+import Exam from './pages/Exam'
+import Result from './pages/Result'
 
 // Placeholder pages — akan dibuat di feature branch berikutnya
 const Placeholder = ({ name }) => (
@@ -90,7 +93,7 @@ function AppRoutes() {
         path="/student"
         element={
           <ProtectedRoute allowedRoles={['student']}>
-            <Placeholder name="Student Home" />
+            <StudentHome />
           </ProtectedRoute>
         }
       />
@@ -98,7 +101,7 @@ function AppRoutes() {
         path="/student/exam"
         element={
           <ProtectedRoute allowedRoles={['student']}>
-            <Placeholder name="Exam" />
+            <Exam />
           </ProtectedRoute>
         }
       />
@@ -106,7 +109,7 @@ function AppRoutes() {
         path="/student/result"
         element={
           <ProtectedRoute allowedRoles={['student']}>
-            <Placeholder name="Result" />
+            <Result />
           </ProtectedRoute>
         }
       />

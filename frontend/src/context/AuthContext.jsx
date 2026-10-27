@@ -1,7 +1,5 @@
 import { createContext, useState, useEffect } from 'react'
-import { mockLogin } from '../mock/auth'
-// Nanti ganti dengan:
-// import api from '../services/api'
+import api from '../services/api'
 
 export const AuthContext = createContext(null)
 
@@ -10,29 +8,61 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   // Cek localStorage saat app pertama dibuka
-  // Supaya user tidak perlu login ulang setiap refresh halaman
+  // Kalau ada token, fetch /api/me untuk validasi token masih valid
   useEffect(() => {
-    const savedUser = localStorage.getItem('user')
     const savedToken = localStorage.getItem('token')
-    if (savedUser && savedToken) {
-      setUser(JSON.parse(savedUser))
+    if (savedToken) {
+      api.get('/me')
+        .then((res) => {
+          if (res.data.success) {
+            const userData = res.data.data
+            setUser(userData)
+            localStorage.setItem('user', JSON.stringify(userData))
+          } else {
+            // Token tidak valid
+            localStorage.removeItem('token')
+            localStorage.removeItem('user')
+          }
+        })
+        .catch(() => {
+          // Token expired atau BE error
+          localStorage.removeItem('token')
+          localStorage.removeItem('user')
+        })
+        .finally(() => setLoading(false))
+    } else {
+      setLoading(false)
     }
-    setLoading(false)
   }, [])
 
   const login = async (email, password) => {
-    // Pakai mock dulu
-    const data = await mockLogin(email, password)
-    // Nanti ganti dengan:
-    // const { data } = await api.post('/auth/login', { email, password })
+    const response = await api.post('/login', { email, password })
+    const result = response.data
 
-    localStorage.setItem('token', data.token)
-    localStorage.setItem('user', JSON.stringify(data.user))
-    setUser(data.user)
-    return data.user
+    if (!result.success) {
+      throw new Error(result.message || 'Login gagal.')
+    }
+
+    const { token } = result.data
+
+    // Simpan token
+    localStorage.setItem('token', token)
+
+    // Fetch /api/me untuk data lengkap (termasuk tenant)
+    const meRes = await api.get('/me')
+    const userData = meRes.data.data
+
+    localStorage.setItem('user', JSON.stringify(userData))
+    setUser(userData)
+    return userData
   }
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await api.post('/logout')
+    } catch (e) {
+      // tetap logout meski API error
+    }
     localStorage.removeItem('token')
     localStorage.removeItem('user')
     setUser(null)

@@ -19,9 +19,12 @@ const NAV_ITEMS = {
 }
 
 export default function AdminLayout({ children, lang, setLang }) {
-  const { logout } = useAuth()
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+
+  const bimbelName = user?.tenant?.name || user?.tenant_name || 'Bimbel'
+  const userName = user?.name || 'Admin'
 
   const btnOn = 'h-8 min-w-[40px] px-3 rounded-full bg-[#0D47A1] text-white text-sm font-bold border-0 cursor-pointer'
   const btnOff = 'h-8 min-w-[40px] px-3 rounded-full bg-transparent text-[#1F2937] text-sm font-bold border-0 cursor-pointer'
@@ -45,8 +48,8 @@ export default function AdminLayout({ children, lang, setLang }) {
           <span className="w-px h-7 bg-[#E6E6EA]" aria-hidden="true" />
 
           <div className="flex flex-col">
-            <span className="font-bold text-[15px]">Bimbel Cahaya Ilmu</span>
-            <span className="text-[12px] text-[#5F6368]">Admin Bimbel</span>
+            <span className="font-bold text-[15px]">{bimbelName}</span>
+            <span className="text-[12px] text-[#5F6368]">{userName} · Admin Bimbel</span>
           </div>
 
           <div className="flex-1" />

@@ -2,6 +2,11 @@ import axios from 'axios'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'ngrok-skip-browser-warning': 'true', // wajib untuk ngrok
+  },
 })
 
 // Setiap request, otomatis sisipkan token kalau ada
@@ -13,7 +18,7 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// Kalau BE return 401 (token expired/invalid), otomatis logout
+// Kalau BE return 401, otomatis logout
 api.interceptors.response.use(
   (response) => response,
   (error) => {
