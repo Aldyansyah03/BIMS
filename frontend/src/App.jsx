@@ -11,6 +11,7 @@ import TutorClass from './pages/TutorClass'
 import StudentHome from './pages/StudentHome'
 import Exam from './pages/Exam'
 import Result from './pages/Result'
+import SuperAdmin from './pages/SuperAdmin'
 
 // Placeholder pages — akan dibuat di feature branch berikutnya
 const Placeholder = ({ name }) => (
@@ -55,7 +56,7 @@ function AppRoutes() {
         path="/super-admin"
         element={
           <ProtectedRoute allowedRoles={['super_admin']}>
-            <Placeholder name="Super Admin" />
+            <SuperAdmin />
           </ProtectedRoute>
         }
       />
