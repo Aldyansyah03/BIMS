@@ -12,6 +12,7 @@ import StudentHome from './pages/StudentHome'
 import Exam from './pages/Exam'
 import Result from './pages/Result'
 import SuperAdmin from './pages/SuperAdmin'
+import WorkspaceStatus from './pages/WorkspaceStatus'
 
 // Placeholder pages — akan dibuat di feature branch berikutnya
 const Placeholder = ({ name }) => (
@@ -114,6 +115,9 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
+      {/* Workspace status — public, bisa diakses tanpa login */}
+      <Route path="/workspace-status" element={<WorkspaceStatus />} />
 
       {/* Fallback */}
       <Route path="/forbidden" element={<Placeholder name="403 - Akses Ditolak" />} />
