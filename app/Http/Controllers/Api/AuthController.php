@@ -37,10 +37,11 @@ class AuthController extends Controller
         }
 
         // 3. Cek status tenant (jika bukan super admin)
+        // Jika tenant statusnya belum 'aktif', tolak login!
         if ($user->tenant && $user->tenant->status !== 'aktif') {
             return response()->json([
                 'success' => false,
-                'message' => 'Layanan bimbel Anda sedang ' . $user->tenant->status . '.'
+                'message' => 'Layanan bimbel Anda belum aktif (Status: ' . $user->tenant->status . '). Silakan selesaikan pembayaran langganan terlebih dahulu.'
             ], 403);
         }
 
@@ -110,7 +111,7 @@ class AuthController extends Controller
             $tenant = Tenant::create([
                 'name'   => $request->tenant_name,
                 'slug'   => $slug,
-                'status' => 'aktif', // kita buat 'aktif' dulu agar langsung bisa di-test
+                'status' => 'menunggu', // kita buat 'aktif' dulu agar langsung bisa di-test
             ]);
 
             // Simpan Akun Admin Bimbel
