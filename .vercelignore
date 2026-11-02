@@ -1,0 +1,10 @@
+.env
+.env.*
+.git
+.github
+/vendor
+/node_modules
+/tests
+phpunit.xml
+README.md
+
