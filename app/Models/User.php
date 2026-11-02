@@ -17,8 +17,29 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'phone',
         'is_active',
     ];
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === 'super_admin';
+    }
+
+    public function isAdminBimbel(): bool
+    {
+        return $this->role === 'admin_bimbel';
+    }
+
+    public function isTutor(): bool
+    {
+        return $this->role === 'tutor';
+    }
+
+    public function isSiswa(): bool
+    {
+        return $this->role === 'siswa';
+    }
 
     protected $hidden = [
         'password',
