@@ -1,0 +1,18 @@
+/* BIMS — global styles */
+*, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: #FFFFFF; color: #1D1D1F; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  a { color: #C8102E; } a:hover { color: #9E0B22; }
+  button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 3px solid #E3B53B; outline-offset: 2px; }
+  img { max-width: 100%; }
+  @media (max-width: 600px) {
+    #app h1 { font-size: clamp(30px, 9vw, 40px) !important; line-height: 1.12 !important; }
+    #app h2 { font-size: clamp(24px, 7vw, 30px) !important; }
+  }
+  #pg { position: fixed; right: 16px; bottom: 16px; z-index: 1000; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  #pg-toggle { display: inline-flex; align-items: center; gap: 8px; height: 48px; padding: 0 18px; border: 0; border-radius: 999px; background: #1D1D1F; color: #FFFFFF; font: 700 14px 'Plus Jakarta Sans', sans-serif; cursor: pointer; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+  #pg-list { width: 300px; max-height: 70vh; overflow-y: auto; background: #FFFFFF; border: 1px solid #E6E6EA; border-radius: 16px; padding: 8px; box-shadow: 0 20px 50px rgba(0,0,0,0.18); display: flex; flex-direction: column; gap: 2px; }
+  #pg-list[hidden] { display: none; }
+  #pg-list button { text-align: left; min-height: 44px; padding: 8px 12px; border: 0; border-radius: 10px; background: transparent; color: #1D1D1F; font: 600 14px 'Plus Jakarta Sans', sans-serif; cursor: pointer; }
+  #pg-list button:hover { background: #F7F7F8; }
+  #pg-list button[aria-current="page"] { background: #FDECEE; color: #9E0B22; }
