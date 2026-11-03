@@ -16,6 +16,10 @@ foreach ($storageDirs as $dir) {
     }
 }
 
+// Reset SCRIPT_NAME agar Symfony Request tidak menganggap /api sebagai subfolder/baseUrl
+$_SERVER['SCRIPT_NAME'] = '/index.php';
+$_SERVER['PHP_SELF'] = '/index.php';
+$_SERVER['SCRIPT_FILENAME'] = __DIR__ . '/../public/index.php';
+
 // Teruskan eksekusi ke index.php publik milik Laravel
 require __DIR__ . '/../public/index.php';
-
