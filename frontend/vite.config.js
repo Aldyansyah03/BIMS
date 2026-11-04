@@ -7,4 +7,13 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  server: {
+    host: true,
+    allowedHosts: [
+      'all',
+      '.ngrok-free.dev',
+      '.ngrok-free.app',
+      'encounter-sasquatch-contort.ngrok-free.dev',
+    ],
+  },
 })

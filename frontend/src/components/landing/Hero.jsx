@@ -10,7 +10,7 @@ export default function Hero({ t }) {
           {t.eyebrow}
         </span>
 
-        <h1 className="m-0 text-[58px] leading-[1.05] font-extrabold tracking-[-0.035em] text-[#1F2937]">
+        <h1 className="m-0 text-[40px] md:text-[58px] leading-[1.05] font-extrabold tracking-[-0.035em] text-[#1F2937]">
           {t.heroA}{' '}
           <span style={{ background: 'linear-gradient(transparent 58%, #3EB6FF 58%, #3EB6FF 92%, transparent 92%)' }}>
             {t.heroB}

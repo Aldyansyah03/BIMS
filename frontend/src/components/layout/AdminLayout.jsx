@@ -7,6 +7,7 @@ const NAV_ITEMS = {
     { label: 'Students & tutors', href: '/admin/classes', icon: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0z M22 21v-2a4 4 0 0 0-3-3.9 M16 3.1a4 4 0 0 1 0 7.8' },
     { label: 'Classes', href: '/admin/classes', icon: 'M2 4h20 M4 4v11a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V4 M12 16v4 M8 21h8' },
     { label: 'Reports', href: '/admin/dashboard', icon: 'M3 3v18h18 M7 16v-5 M12 16V8 M17 16V5' },
+    { label: 'Invoices', href: '/admin/invoices', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M8 13h8 M8 17h5' },
     { label: 'Subscription', href: '/admin/dashboard', icon: 'M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z M2 10h20' },
   ],
   id: [
@@ -14,6 +15,7 @@ const NAV_ITEMS = {
     { label: 'Siswa & tutor', href: '/admin/classes', icon: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0z M22 21v-2a4 4 0 0 0-3-3.9 M16 3.1a4 4 0 0 1 0 7.8' },
     { label: 'Kelas', href: '/admin/classes', icon: 'M2 4h20 M4 4v11a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V4 M12 16v4 M8 21h8' },
     { label: 'Laporan', href: '/admin/dashboard', icon: 'M3 3v18h18 M7 16v-5 M12 16V8 M17 16V5' },
+    { label: 'Tagihan', href: '/admin/invoices', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M8 13h8 M8 17h5' },
     { label: 'Langganan', href: '/admin/dashboard', icon: 'M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z M2 10h20' },
   ],
 }

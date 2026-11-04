@@ -13,6 +13,8 @@ import Exam from './pages/Exam'
 import Result from './pages/Result'
 import SuperAdmin from './pages/SuperAdmin'
 import WorkspaceStatus from './pages/WorkspaceStatus'
+import Invoices from './pages/Invoices'
+import InvoicesAdmin from './pages/InvoicesAdmin'
 
 // Placeholder pages — akan dibuat di feature branch berikutnya
 const Placeholder = ({ name }) => (
@@ -53,32 +55,13 @@ function AppRoutes() {
       <Route path="/register" element={<Register />} />
 
       {/* Super Admin */}
-      <Route
-        path="/super-admin"
-        element={
-          <ProtectedRoute allowedRoles={['super_admin']}>
-            <SuperAdmin />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/super-admin" element={<ProtectedRoute allowedRoles={['super_admin']}><SuperAdmin /></ProtectedRoute>} />
+      <Route path="/super-admin/invoices" element={<ProtectedRoute allowedRoles={['super_admin']}><InvoicesAdmin /></ProtectedRoute>} />
 
       {/* Admin Bimbel */}
-      <Route
-        path="/admin/dashboard"
-        element={
-          <ProtectedRoute allowedRoles={['admin_bimbel']}>
-            <AdminDashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/classes"
-        element={
-          <ProtectedRoute allowedRoles={['admin_bimbel']}>
-            <AdminClasses />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={['admin_bimbel']}><AdminDashboard /></ProtectedRoute>} />
+      <Route path="/admin/classes" element={<ProtectedRoute allowedRoles={['admin_bimbel']}><AdminClasses /></ProtectedRoute>} />
+      <Route path="/admin/invoices" element={<ProtectedRoute allowedRoles={['admin_bimbel']}><Invoices /></ProtectedRoute>} />
 
       {/* Tutor */}
       <Route

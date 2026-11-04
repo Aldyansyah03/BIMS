@@ -1,87 +1,72 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import api from '../services/api'
-// mock tidak dipakai lagi
+import { usePackages } from '../hooks/usePackages'
 
 const PLANS = ['Basic', 'Standard', 'Pro']
 
-const TEXT = {
-  en: {
-    title: 'Register your bimbel',
-    stepsAria: 'Registration steps',
-    steps: ['Fill in details', 'Waiting for approval', 'Workspace active'],
-    secBimbel: 'Bimbel details',
-    fName: 'Bimbel name', fCity: 'City', fPhone: 'WhatsApp number', fWs: 'Workspace address',
-    wsOk: 'Address available', wsErr: 'Workspace address is required.',
-    secAdmin: 'Admin Bimbel account',
-    fAdminName: 'Full name', fPass: 'Password', passHint: 'At least 8 characters.',
-    secPlan: 'Plan', perMonth: '/ month', upTo: 'Up to [USER LIMIT] users',
-    planNote: 'Monthly billing. All plans include every learning feature; they differ only in the user limit.',
-    consent: 'I agree that student data, scores and materials are used only for learning by authorised people in my bimbel.',
-    submitBtn: 'Submit registration', submitting: 'Submitting...',
-    nextTitle: 'What happens next',
-    next: [
-      'Your registration is saved with status Pending.',
-      'The BIMS Super Admin reviews it and approves or rejects it.',
-      'Once approved, you get an email and can log in to set up classes.',
-    ],
-    statusPending: 'Status: Pending',
-    doneTitle: 'Registration received',
-    doneBody: 'Your workspace is not active yet. We will email you as soon as the Super Admin approves it.',
-    labelBimbel: 'Bimbel', labelEmail: 'Email', labelWs: 'Workspace', labelPlan: 'Plan',
-    backHome: 'Back to home', editAgain: 'Change details',
-    login: 'Log in',
-    errRequired: 'Please fill in all required fields.',
-    errPass: 'Password must be at least 8 characters.',
-    errEmail: 'Please enter a valid email.',
-  },
-  id: {
-    title: 'Daftarkan bimbel Anda',
-    stepsAria: 'Tahap pendaftaran',
-    steps: ['Isi data', 'Menunggu persetujuan', 'Ruang kerja aktif'],
-    secBimbel: 'Data bimbel',
-    fName: 'Nama bimbel', fCity: 'Kota', fPhone: 'Nomor WhatsApp', fWs: 'Alamat ruang kerja',
-    wsOk: 'Alamat tersedia', wsErr: 'Alamat ruang kerja wajib diisi.',
-    secAdmin: 'Akun Admin Bimbel',
-    fAdminName: 'Nama lengkap', fPass: 'Kata sandi', passHint: 'Minimal 8 karakter.',
-    secPlan: 'Paket', perMonth: '/ bulan', upTo: 'Hingga [BATAS PENGGUNA] pengguna',
-    planNote: 'Tagihan bulanan. Semua paket berisi seluruh fitur belajar; yang berbeda hanya batas pengguna.',
-    consent: 'Saya setuju data siswa, nilai, dan materi hanya digunakan untuk pembelajaran oleh pihak berwenang di bimbel saya.',
-    submitBtn: 'Kirim pendaftaran', submitting: 'Mendaftarkan...',
-    nextTitle: 'Langkah berikutnya',
-    next: [
-      'Pendaftaran tersimpan dengan status Menunggu.',
-      'Super Admin BIMS memeriksa lalu menyetujui atau menolak.',
-      'Setelah disetujui, Anda menerima email dan bisa login untuk mengatur kelas.',
-    ],
-    statusPending: 'Status: Menunggu',
-    doneTitle: 'Pendaftaran diterima',
-    doneBody: 'Ruang kerja Anda belum aktif. Kami akan mengirim email begitu Super Admin menyetujuinya.',
-    labelBimbel: 'Bimbel', labelEmail: 'Email', labelWs: 'Alamat ruang kerja', labelPlan: 'Paket',
-    backHome: 'Kembali ke beranda', editAgain: 'Ubah data',
-    login: 'Masuk',
-    errRequired: 'Mohon lengkapi semua kolom yang wajib diisi.',
-    errPass: 'Kata sandi minimal 8 karakter.',
-    errEmail: 'Masukkan email yang valid.',
-  },
+const T = {
+  title: 'Daftarkan bimbel Anda',
+  stepsAria: 'Tahap pendaftaran',
+  steps: ['Isi data', 'Menunggu persetujuan', 'Ruang kerja aktif'],
+  secBimbel: 'Data bimbel',
+  fName: 'Nama bimbel', fCity: 'Kota', fPhone: 'Nomor WhatsApp', fWs: 'Alamat ruang kerja',
+  wsOk: 'Alamat tersedia',
+  secAdmin: 'Akun Admin Bimbel',
+  fAdminName: 'Nama lengkap', fPass: 'Kata sandi', passHint: 'Minimal 8 karakter.',
+  secPlan: 'Paket', perMonth: '/ bulan', upTo: 'Hingga [BATAS PENGGUNA] pengguna',
+  planNote: 'Tagihan bulanan. Semua paket berisi seluruh fitur belajar; yang berbeda hanya batas pengguna.',
+  consent: 'Saya setuju data siswa, nilai, dan materi hanya digunakan untuk pembelajaran oleh pihak berwenang di bimbel saya.',
+  submitBtn: 'Kirim pendaftaran', submitting: 'Mendaftarkan...',
+  nextTitle: 'Langkah berikutnya',
+  next: [
+    'Pendaftaran tersimpan dengan status Menunggu.',
+    'Super Admin BIMS memeriksa lalu menyetujui atau menolak.',
+    'Setelah disetujui, Anda menerima email dan bisa login untuk mengatur kelas.',
+  ],
+  statusPending: 'Status: Menunggu',
+  doneTitle: 'Pendaftaran diterima',
+  doneBody: 'Ruang kerja Anda belum aktif. Kami akan mengirim email begitu Super Admin menyetujuinya.',
+  labelBimbel: 'Bimbel', labelEmail: 'Email', labelWs: 'Alamat ruang kerja', labelPlan: 'Paket',
+  backHome: 'Kembali ke beranda', editAgain: 'Ubah data',
+  login: 'Masuk',
+  errRequired: 'Mohon lengkapi semua kolom yang wajib diisi.',
+  errPass: 'Kata sandi minimal 8 karakter.',
+  errEmail: 'Masukkan email yang valid.',
 }
 
 const inputCls = 'h-11 box-border border border-[#C7C7CF] rounded-[10px] px-3 text-[15px] font-medium text-[#1F2937] focus:outline-none focus:border-[#0D47A1] transition w-full bg-white'
 
+const formatPrice = (price) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(price)
+
 export default function Register() {
-  const [lang, setLang] = useState('id')
-  const t = TEXT[lang]
+  const t = T
+  const [searchParams] = useSearchParams()
+  const { packages, loading: pkgLoading } = usePackages()
 
   const [form, setForm] = useState({
     bimbel_name: '', city: '', phone: '', workspace: '',
     admin_name: '', email: '', password: '',
   })
-  const [plan, setPlan] = useState('Standard')
+  const [selectedPkgId, setSelectedPkgId] = useState(null)
   const [consent, setConsent] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
   const [result, setResult] = useState(null)
+  const [snapToken, setSnapToken] = useState(null)
+
+  useEffect(() => {
+    const pkgId = searchParams.get('package')
+    if (pkgId) setSelectedPkgId(Number(pkgId))
+  }, [searchParams])
+
+  useEffect(() => {
+    if (packages.length > 0 && !selectedPkgId) {
+      const featured = packages.find((p) => p.is_featured) || packages[0]
+      setSelectedPkgId(featured.id)
+    }
+  }, [packages])
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
 
@@ -108,15 +93,20 @@ export default function Register() {
         password_confirmation: form.password,
         tenant_name: form.bimbel_name,
         tenant_slug: form.workspace,
+        package_id: selectedPkgId,
       })
-      const result = response.data
-      if (!result.success) throw new Error(result.message || 'Pendaftaran gagal.')
+      const res = response.data
+
+      if (!res.success) throw new Error(res.message || 'Pendaftaran gagal.')
+
       setResult({
-        bimbel_name: result.data.tenant.name,
-        email: result.data.user.email,
-        workspace: result.data.tenant.slug,
-        plan,
+        bimbel_name: res.data.tenant.name,
+        email: res.data.user.email,
+        workspace: res.data.tenant.slug,
+        plan: packages.find((p) => p.id === selectedPkgId)?.name || '',
       })
+
+      if (res.data.snap_token) setSnapToken(res.data.snap_token)
       setDone(true)
     } catch (err) {
       const msg = err.response?.data?.message || err.message || 'Pendaftaran gagal.'
@@ -126,8 +116,20 @@ export default function Register() {
     }
   }
 
-  const btnOn = 'h-9 min-w-[40px] px-3 rounded-full bg-[#0D47A1] text-white text-sm font-bold border-0 cursor-pointer'
-  const btnOff = 'h-9 min-w-[40px] px-3 rounded-full bg-transparent text-[#1F2937] text-sm font-bold border-0 cursor-pointer'
+  // Trigger Midtrans Snap popup
+  const openSnap = () => {
+    if (!snapToken) return
+    if (window.snap) {
+      window.snap.pay(snapToken, {
+        onSuccess: () => alert('Pembayaran berhasil! Bimbel Anda akan segera diaktifkan.'),
+        onPending: () => alert('Pembayaran pending. Silakan selesaikan pembayaran.'),
+        onError: () => alert('Pembayaran gagal. Silakan coba lagi.'),
+        onClose: () => console.log('Snap ditutup.'),
+      })
+    } else {
+      alert('Midtrans Snap belum dimuat. Pastikan koneksi internet aktif.')
+    }
+  }
 
   const curStep = done ? 1 : 0
 
@@ -140,11 +142,6 @@ export default function Register() {
             <img src="/logo.png" alt="BIMS" className="h-10 w-auto object-contain" />
           </Link>
           <div className="flex-1" />
-          {/* Language toggle */}
-          <div className="flex gap-0.5 p-[3px] border border-[#1F2937] rounded-full items-center">
-            <button type="button" onClick={() => setLang('en')} aria-pressed={lang === 'en'} className={lang === 'en' ? btnOn : btnOff}>EN</button>
-            <button type="button" onClick={() => setLang('id')} aria-pressed={lang === 'id'} className={lang === 'id' ? btnOn : btnOff}>ID</button>
-          </div>
           <Link to="/login" className="inline-flex items-center h-11 px-4 text-[#1F2937] no-underline font-semibold text-[15px]">
             {t.login}
           </Link>
@@ -220,19 +217,28 @@ export default function Register() {
               <fieldset className="m-0 border border-[#E6E6EA] rounded-[18px] bg-white px-6 py-5 flex flex-col gap-3">
                 <legend className="font-extrabold text-base px-1.5">{t.secPlan}</legend>
                 <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3">
-                  {PLANS.map((name) => (
-                    <button
-                      key={name}
-                      type="button"
-                      onClick={() => setPlan(name)}
-                      aria-pressed={plan === name}
-                      className={`flex flex-col items-start gap-1.5 p-4 rounded-[14px] cursor-pointer text-left font-['Plus_Jakarta_Sans',sans-serif] transition ${plan === name ? 'border-2 border-[#0D47A1] bg-[#EEF4FF]' : 'border border-[#D6D6DC] bg-white'}`}
-                    >
-                      <span className="font-extrabold text-base text-[#1F2937]">{name}</span>
-                      <span className="font-mono text-sm text-[#0D47A1]">[PRICE] {t.perMonth}</span>
-                      <span className="text-[13px] text-[#5F6368]">{t.upTo}</span>
-                    </button>
-                  ))}
+                  {pkgLoading ? (
+                    <div className="col-span-3 h-24 bg-[#F3F6FA] rounded-[14px] animate-pulse" />
+                  ) : (
+                    packages.map((pkg) => (
+                      <button
+                        key={pkg.id}
+                        type="button"
+                        onClick={() => setSelectedPkgId(pkg.id)}
+                        aria-pressed={selectedPkgId === pkg.id}
+                        className={`flex flex-col items-start gap-1.5 p-4 rounded-[14px] cursor-pointer text-left font-['Plus_Jakarta_Sans',sans-serif] transition ${selectedPkgId === pkg.id ? 'border-2 border-[#0D47A1] bg-[#EEF4FF]' : 'border border-[#D6D6DC] bg-white'}`}
+                      >
+                        <div className="flex items-center gap-2 w-full">
+                          <span className="font-extrabold text-base text-[#1F2937]">{pkg.name}</span>
+                          {pkg.is_featured && (
+                            <span className="text-[11px] font-bold bg-[#3EB6FF] text-[#0a3880] px-2 py-0.5 rounded-full">Populer</span>
+                          )}
+                        </div>
+                        <span className="font-mono text-sm text-[#0D47A1] font-semibold">{formatPrice(pkg.price)} {t.perMonth}</span>
+                        <span className="text-[13px] text-[#5F6368]">Hingga {pkg.max_users} pengguna</span>
+                      </button>
+                    ))
+                  )}
                 </div>
                 <span className="text-[13px] text-[#5F6368]">{t.planNote}</span>
               </fieldset>
@@ -263,7 +269,7 @@ export default function Register() {
                 type="button"
                 onClick={handleSubmit}
                 disabled={loading || !consent}
-                title={!consent ? (lang === 'id' ? 'Centang persetujuan terlebih dahulu' : 'Please check the consent box first') : ''}
+                title={!consent ? 'Centang persetujuan terlebih dahulu' : ''}
                 className="h-[52px] rounded-xl border-0 bg-[#0D47A1] text-white font-extrabold text-base cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#0a3880] transition flex items-center justify-center gap-2"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" className="flex-none">
@@ -304,6 +310,19 @@ export default function Register() {
             </dl>
 
             <div className="flex flex-wrap gap-2.5">
+              {/* Tombol bayar sekarang kalau ada snap_token */}
+              {snapToken && (
+                <button
+                  type="button"
+                  onClick={openSnap}
+                  className="h-12 px-5 rounded-xl border-0 bg-[#3EB6FF] text-[#0a3880] font-extrabold text-[15px] cursor-pointer hover:bg-[#60c8ff] transition flex items-center gap-2"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" className="flex-none">
+                    <path d="M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z M2 10h20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  Bayar Sekarang
+                </button>
+              )}
               <Link to="/" className="inline-flex items-center h-12 px-5 rounded-xl bg-[#0D47A1] text-white no-underline font-bold hover:bg-[#0a3880] transition">
                 {t.backHome}
               </Link>
