@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 
 export default function Hero({ t }) {
   return (
-    <section id="top" className="max-w-[1200px] mx-auto px-6 pt-16 pb-24 flex flex-wrap gap-12 items-center">
+    <section id="top" className="max-w-[1200px] mx-auto px-6 pt-16 pb-28 flex flex-wrap gap-12 items-center">
 
       {/* Left */}
       <div className="flex-1 min-w-0 basis-[480px] flex flex-col gap-6">
@@ -45,7 +45,7 @@ export default function Hero({ t }) {
       </div>
 
       {/* Right — video demo dalam frame browser */}
-      <div className="flex-1 min-w-0 basis-[560px] relative">
+      <div className="flex-1 min-w-0 basis-[560px] relative pb-10">
         {/* Browser frame */}
         <div className="bg-white border border-[#E6E6EA] rounded-[20px] shadow-[0_24px_60px_rgba(13,71,161,0.15)] overflow-hidden">
 
@@ -64,19 +64,21 @@ export default function Hero({ t }) {
             </div>
           </div>
 
-          {/* Video — natural aspect ratio */}
-          <video
-            src="/demo.mp4"
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full h-auto block"
-          />
+          {/* Video — aspect-ratio tetap agar tidak collapse saat autoPlay diblokir */}
+          <div className="aspect-[16/10] bg-[#F3F6FA]">
+            <video
+              src="/demo.mp4"
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="w-full h-full object-cover block"
+            />
+          </div>
         </div>
 
-        {/* Score badge */}
-        <div className="absolute -right-3 -bottom-10 bg-white border border-[#E6E6EA] rounded-[14px] px-[18px] py-3.5 shadow-[0_12px_30px_rgba(13,71,161,0.12)] flex items-center gap-3">
+        {/* Score badge — posisi dalam batas container (pb-10 di parent) */}
+        <div className="absolute right-0 -bottom-2 bg-white border border-[#E6E6EA] rounded-[14px] px-[18px] py-3.5 shadow-[0_12px_30px_rgba(13,71,161,0.12)] flex items-center gap-3">
           <span className="font-mono text-[28px] font-semibold text-[#0D47A1]">85</span>
           <span className="text-[13px] leading-snug text-[#4A4A55] max-w-[140px]">{t.mockScore}</span>
         </div>

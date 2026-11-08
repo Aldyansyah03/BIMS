@@ -16,9 +16,9 @@ export default function Navbar({ t, lang, setLang }) {
   ]
 
   return (
-    <header className="sticky top-0 z-50 px-4 pt-4 pb-1">
+    <header className="sticky top-0 z-50 px-4 pt-4 pb-1" style={{ willChange: 'transform' }}>
       {/* Floating pill container */}
-      <div className="max-w-[1200px] mx-auto bg-white/90 backdrop-blur-md border border-[#E6E6EA] rounded-2xl shadow-[0_4px_24px_rgba(13,71,161,0.08)]">
+      <div className="max-w-[1200px] mx-auto bg-white border border-[#E6E6EA] rounded-2xl shadow-[0_4px_24px_rgba(13,71,161,0.08)]">
 
         {/* Main row */}
         <div className="px-5 py-3 flex items-center gap-x-6 gap-y-3">

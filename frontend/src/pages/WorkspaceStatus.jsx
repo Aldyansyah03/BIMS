@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import api from '../services/api'
 
 const TEXT = {
   en: {
@@ -120,13 +121,38 @@ const STATE_CONFIG = {
 
 export default function WorkspaceStatus() {
   const [lang, setLang] = useState('id')
-  const [s, setS] = useState('pending')
-  const { logout } = useAuth()
+  const { logout, user } = useAuth()
   const navigate = useNavigate()
 
+  // Fetch workspace status dari BE berdasarkan tenant user yang login.
+  // Kalau user belum login atau tidak ada tenant, tampilkan status dari URL param / default.
+  const [wsStatus, setWsStatus]     = useState(null)   // data dari BE
+  const [statusLoading, setStatusLoading] = useState(true)
+
+  useEffect(() => {
+    // Cek status workspace dari BE
+    api.get('/workspace/status')
+      .then((r) => {
+        const data = r.data.data ?? r.data
+        // BE diharapkan return: { status: 'pending'|'expired'|'rejected'|'denied'|'active', ... }
+        if (data?.status && data.status !== 'active') {
+          setWsStatus(data)
+        }
+      })
+      .catch(() => {
+        // Jika gagal fetch (misalnya user tidak login), gunakan state default
+      })
+      .finally(() => setStatusLoading(false))
+  }, [])
+
+  // Untuk prototype: bisa switch manual, tapi status real dari BE diutamakan
+  const realStatus = wsStatus?.status  // 'pending' | 'expired' | 'rejected' | 'denied' | null
+  const [s, setS] = useState('pending') // prototype switcher
+  const activeState = realStatus ?? s   // real status diutamakan kalau ada
+
   const t = TEXT[lang]
-  const cur = t.states[s]
-  const cfg = STATE_CONFIG[s]
+  const cur = t.states[activeState] ?? t.states.pending
+  const cfg = STATE_CONFIG[activeState] ?? STATE_CONFIG.pending
 
   const btnOn = 'h-8 min-w-[40px] px-3 rounded-full bg-[#0D47A1] text-white text-sm font-bold border-0 cursor-pointer'
   const btnOff = 'h-8 min-w-[40px] px-3 rounded-full bg-transparent text-[#1F2937] text-sm font-bold border-0 cursor-pointer'
@@ -163,26 +189,28 @@ export default function WorkspaceStatus() {
       </header>
 
       <main className="max-w-[1100px] mx-auto px-6 py-8 pb-14 flex flex-col gap-7">
-        {/* Tab switcher — untuk prototype */}
-        <div role="tablist" aria-label={t.statesAria} className="flex flex-wrap gap-2 items-center">
-          <span className="font-mono text-[12px] tracking-widest uppercase text-[#5F6368] mr-2">{t.prototype}</span>
-          {Object.keys(t.tabs).map((key) => (
-            <button
-              key={key}
-              type="button"
-              role="tab"
-              aria-selected={s === key}
-              onClick={() => setS(key)}
-              className={`h-11 px-4 rounded-full font-bold text-sm cursor-pointer transition ${
-                s === key
-                  ? 'bg-[#0D47A1] text-white border-[1.5px] border-[#0D47A1]'
-                  : 'bg-white text-[#1F2937] border-[1.5px] border-[#C7C7CF] hover:border-[#0D47A1]'
-              }`}
-            >
-              {t.tabs[key]}
-            </button>
-          ))}
-        </div>
+        {/* Tab switcher — hanya untuk prototype / development */}
+        {!realStatus && (
+          <div role="tablist" aria-label={t.statesAria} className="flex flex-wrap gap-2 items-center">
+            <span className="font-mono text-[12px] tracking-widest uppercase text-[#5F6368] mr-2">{t.prototype}</span>
+            {Object.keys(t.tabs).map((key) => (
+              <button
+                key={key}
+                type="button"
+                role="tab"
+                aria-selected={s === key}
+                onClick={() => setS(key)}
+                className={`h-11 px-4 rounded-full font-bold text-sm cursor-pointer transition ${
+                  s === key
+                    ? 'bg-[#0D47A1] text-white border-[1.5px] border-[#0D47A1]'
+                    : 'bg-white text-[#1F2937] border-[1.5px] border-[#C7C7CF] hover:border-[#0D47A1]'
+                }`}
+              >
+                {t.tabs[key]}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Status card */}
         <section className="max-w-[680px] mx-auto w-full bg-white border border-[#E6E6EA] rounded-[22px] p-10 flex flex-col gap-5 items-start">
@@ -202,14 +230,16 @@ export default function WorkspaceStatus() {
           <p className="m-0 text-base leading-relaxed text-[#4A4A55]">{cur.body}</p>
 
           {/* Renewal info — hanya untuk expired */}
-          {s === 'expired' && (
+          {activeState === 'expired' && (
             <div className="w-full flex flex-col gap-2.5 p-5 rounded-[14px] bg-[#F3F6FA]">
               <span className="font-extrabold text-[15px]">{t.renewTitle}</span>
               <dl className="m-0 grid grid-cols-[max-content_1fr] gap-x-5 gap-y-1.5 text-sm">
                 <dt className="text-[#5F6368]">{t.plan}</dt>
-                <dd className="m-0 font-bold">Standard · [PRICE] {t.perMonth}</dd>
+                <dd className="m-0 font-bold">
+                  {wsStatus?.plan_name ?? '—'}{wsStatus?.plan_price ? ` · ${wsStatus.plan_price} ${t.perMonth}` : ''}
+                </dd>
                 <dt className="text-[#5F6368]">{t.ended}</dt>
-                <dd className="m-0 font-mono">10 Oct 2026</dd>
+                <dd className="m-0 font-mono">{wsStatus?.expired_at ?? '—'}</dd>
                 <dt className="text-[#5F6368]">{t.billing}</dt>
                 <dd className="m-0 font-bold text-[#8A1C12]">{t.unpaid}</dd>
               </dl>

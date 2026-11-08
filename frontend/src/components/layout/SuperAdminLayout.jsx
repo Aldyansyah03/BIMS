@@ -3,20 +3,20 @@ import { useAuth } from '../../hooks/useAuth'
 
 const NAV_ITEMS = {
   en: [
-    { label: 'Overview', href: '/super-admin', icon: 'M3 3h7v7H3z M14 3h7v7h-7z M14 14h7v7h-7z M3 14h7v7H3z' },
-    { label: 'Bimbel registrations', href: '/super-admin', icon: 'M9 3h6a1 1 0 0 1 1 1v2H8V4a1 1 0 0 1 1-1z M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2 M9 14l2 2 4-4' },
-    { label: 'Invoices', href: '/super-admin/invoices', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M8 13h8 M8 17h5' },
-    { label: 'Plans & billing', href: '/super-admin', icon: 'M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z M2 10h20 M6 15h4' },
-    { label: 'Service health', href: '/super-admin', icon: 'M22 12h-4l-3 9L9 3l-3 9H2' },
-    { label: 'Backups', href: '/super-admin', icon: 'M4 6c0 1.7 3.6 3 8 3s8-1.3 8-3-3.6-3-8-3-8 1.3-8 3z M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6 M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3' },
+    { label: 'Overview',             href: '/super-admin',          icon: 'M3 3h7v7H3z M14 3h7v7h-7z M14 14h7v7h-7z M3 14h7v7H3z' },
+    { label: 'Bimbel registrations', href: '/super-admin',          icon: 'M9 3h6a1 1 0 0 1 1 1v2H8V4a1 1 0 0 1 1-1z M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2 M9 14l2 2 4-4' },
+    { label: 'Invoices',             href: '/super-admin/invoices', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M8 13h8 M8 17h5' },
+    { label: 'Plans',                href: '/super-admin/packages', icon: 'M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z' },
+    { label: 'Service health',       href: '/super-admin',          icon: 'M22 12h-4l-3 9L9 3l-3 9H2' },
+    { label: 'Backups',              href: '/super-admin',          icon: 'M4 6c0 1.7 3.6 3 8 3s8-1.3 8-3-3.6-3-8-3-8 1.3-8 3z M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6 M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3' },
   ],
   id: [
-    { label: 'Ringkasan', href: '/super-admin', icon: 'M3 3h7v7H3z M14 3h7v7h-7z M14 14h7v7h-7z M3 14h7v7H3z' },
-    { label: 'Pendaftaran bimbel', href: '/super-admin', icon: 'M9 3h6a1 1 0 0 1 1 1v2H8V4a1 1 0 0 1 1-1z M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2 M9 14l2 2 4-4' },
-    { label: 'Tagihan', href: '/super-admin/invoices', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M8 13h8 M8 17h5' },
-    { label: 'Paket & tagihan', href: '/super-admin', icon: 'M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z M2 10h20 M6 15h4' },
-    { label: 'Kondisi layanan', href: '/super-admin', icon: 'M22 12h-4l-3 9L9 3l-3 9H2' },
-    { label: 'Backup', href: '/super-admin', icon: 'M4 6c0 1.7 3.6 3 8 3s8-1.3 8-3-3.6-3-8-3-8 1.3-8 3z M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6 M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3' },
+    { label: 'Ringkasan',           href: '/super-admin',          icon: 'M3 3h7v7H3z M14 3h7v7h-7z M14 14h7v7h-7z M3 14h7v7H3z' },
+    { label: 'Pendaftaran bimbel',  href: '/super-admin',          icon: 'M9 3h6a1 1 0 0 1 1 1v2H8V4a1 1 0 0 1 1-1z M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2 M9 14l2 2 4-4' },
+    { label: 'Tagihan',             href: '/super-admin/invoices', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M8 13h8 M8 17h5' },
+    { label: 'Paket',               href: '/super-admin/packages', icon: 'M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z' },
+    { label: 'Kondisi layanan',     href: '/super-admin',          icon: 'M22 12h-4l-3 9L9 3l-3 9H2' },
+    { label: 'Backup',              href: '/super-admin',          icon: 'M4 6c0 1.7 3.6 3 8 3s8-1.3 8-3-3.6-3-8-3-8 1.3-8 3z M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6 M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3' },
   ],
 }
 

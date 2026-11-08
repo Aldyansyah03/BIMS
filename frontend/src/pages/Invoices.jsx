@@ -26,9 +26,10 @@ export default function Invoices() {
   useEffect(() => {
     getMyInvoices()
       .then((res) => {
-        if (res.success) setInvoices(res.data)
+        const data = res.data?.data ?? res.data ?? []
+        setInvoices(Array.isArray(data) ? data : [])
       })
-      .catch((err) => setError(err.message || 'Gagal memuat invoice.'))
+      .catch((err) => setError(err.response?.data?.message || err.message || 'Gagal memuat invoice.'))
       .finally(() => setLoading(false))
   }, [])
 

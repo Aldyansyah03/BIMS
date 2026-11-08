@@ -2,16 +2,19 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 
 export default function TutorLayout({ children, lang, setLang }) {
-  const { logout } = useAuth()
+  const { logout, user } = useAuth()
   const navigate = useNavigate()
 
   const btnOn = 'h-8 min-w-[40px] px-3 rounded-full bg-[#0D47A1] text-white text-sm font-bold border-0 cursor-pointer'
   const btnOff = 'h-8 min-w-[40px] px-3 rounded-full bg-transparent text-[#1F2937] text-sm font-bold border-0 cursor-pointer'
 
-  const handleLogout = () => {
-    logout()
+  const handleLogout = async () => {
+    await logout()
     navigate('/login')
   }
+
+  const tutorName   = user?.name ?? 'Tutor'
+  const bimbelName  = user?.tenant?.name ?? user?.tenant_name ?? 'BIMS'
 
   return (
     <div className="h-screen bg-[#F3F6FA] font-['Plus_Jakarta_Sans',system-ui,sans-serif] text-[#1F2937] flex flex-col overflow-hidden">
@@ -25,9 +28,9 @@ export default function TutorLayout({ children, lang, setLang }) {
           <span className="w-px h-7 bg-[#E6E6EA]" aria-hidden="true" />
 
           <div className="flex flex-col">
-            <span className="font-bold text-[15px]">Rina S.</span>
+            <span className="font-bold text-[15px]">{tutorName}</span>
             <span className="text-[12px] text-[#5F6368]">
-              Tutor · Bimbel Cahaya Ilmu
+              {lang === 'id' ? 'Tutor' : 'Tutor'} · {bimbelName}
             </span>
           </div>
 
