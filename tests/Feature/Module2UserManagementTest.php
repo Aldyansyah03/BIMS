@@ -229,4 +229,65 @@ class Module2UserManagementTest extends TestCase
 
         $response->assertStatus(403);
     }
+
+    public function test_admin_users_endpoints_support_frontend_spec()
+    {
+        // 1. Create student via POST /api/admin/users (role 'student' auto-normalized to 'siswa')
+        $createRes = $this->actingAs($this->adminBimbel, 'sanctum')
+            ->postJson('/api/admin/users', [
+                'name'     => 'Murid Cerdas',
+                'email'    => 'murid@bimbelhebat.com',
+                'password' => 'secret123',
+                'role'     => 'student',
+                'phone'    => '081122334455',
+            ]);
+
+        $createRes->assertStatus(201)
+            ->assertJson([
+                'success' => true,
+                'data' => [
+                    'role' => 'siswa',
+                    'email' => 'murid@bimbelhebat.com',
+                ]
+            ]);
+
+        $studentId = $createRes->json('data.id');
+
+        // 2. Query with role=student via GET /api/admin/users?role=student
+        $getRes = $this->actingAs($this->adminBimbel, 'sanctum')
+            ->getJson('/api/admin/users?role=student');
+
+        $getRes->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+            ]);
+        $this->assertCount(1, $getRes->json('data'));
+
+        // 3. Toggle active via PATCH /api/admin/users/{id}/toggle-active
+        $toggleRes = $this->actingAs($this->adminBimbel, 'sanctum')
+            ->patchJson("/api/admin/users/{$studentId}/toggle-active");
+
+        $toggleRes->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+                'data' => [
+                    'is_active' => false,
+                ]
+            ]);
+
+        // 4. Reset password via PATCH /api/admin/users/{id}/reset-password
+        $resetRes = $this->actingAs($this->adminBimbel, 'sanctum')
+            ->patchJson("/api/admin/users/{$studentId}/reset-password", [
+                'password' => 'newpassword123',
+            ]);
+
+        $resetRes->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+            ]);
+
+        // Verify password updated
+        $updatedUser = User::find($studentId);
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('newpassword123', $updatedUser->password));
+    }
 }

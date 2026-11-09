@@ -29,8 +29,13 @@ class UserController extends Controller
         }
 
         // 2. Filter Role (tutor, siswa, admin_bimbel)
+        // Mendukung 'student' sebagai alias untuk 'siswa'
         if ($request->filled('role')) {
-            $query->where('role', $request->role);
+            $role = $request->role;
+            if ($role === 'student') {
+                $role = 'siswa';
+            }
+            $query->where('role', $role);
         }
 
         // 3. Filter Status Keaktifan Akun
@@ -104,6 +109,11 @@ class UserController extends Controller
                 'success' => false,
                 'message' => 'Tenant ID wajib ditentukan.',
             ], 422);
+        }
+
+        // Normalisasi role student -> siswa jika dikirim dari frontend
+        if ($request->role === 'student') {
+            $request->merge(['role' => 'siswa']);
         }
 
         // 1. Validasi Input
@@ -247,6 +257,8 @@ class UserController extends Controller
         // Tentukan nilai status baru
         if ($request->has('is_active')) {
             $newStatus = filter_var($request->is_active, FILTER_VALIDATE_BOOLEAN);
+        } elseif ($request->has('active')) {
+            $newStatus = filter_var($request->active, FILTER_VALIDATE_BOOLEAN);
         } else {
             $newStatus = !$user->is_active;
         }
@@ -262,6 +274,43 @@ class UserController extends Controller
                 'id'        => $user->id,
                 'name'      => $user->name,
                 'is_active' => $user->is_active,
+                'active'    => $user->is_active,
+            ]
+        ]);
+    }
+
+    /**
+     * Reset kata sandi akun pengguna oleh Admin Bimbel / Super Admin.
+     */
+    public function resetPassword(Request $request, $id)
+    {
+        $currentUser = $request->user();
+        $user = User::findOrFail($id);
+
+        // Isolasi Multi-Tenant
+        if ($currentUser->role !== 'super_admin' && $user->tenant_id !== $currentUser->tenant_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses ditolak. Pengguna ini bukan bagian dari bimbel Anda.'
+            ], 403);
+        }
+
+        $request->validate([
+            'password' => 'nullable|string|min:6',
+        ]);
+
+        $newPassword = $request->filled('password') ? $request->password : 'password123';
+
+        $user->update([
+            'password' => Hash::make($newPassword),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Kata sandi untuk akun {$user->name} berhasil direset.",
+            'data'    => [
+                'id'    => $user->id,
+                'email' => $user->email,
             ]
         ]);
     }
