@@ -8,7 +8,7 @@ use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
 // Endpoint Publik
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/register', [AuthController::class, 'register']);
 Route::get('/packages', [PackageController::class, 'index']);
 Route::post('/midtrans-callback', [PaymentController::class, 'callback']);
@@ -31,11 +31,23 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ========== FITUR PENGGUNA & HAK AKSES (MODUL 2) ==========
     Route::middleware('role:admin_bimbel,super_admin')->group(function () {
+        // Format Standard /users
         Route::get('/users', [UserController::class, 'index']);
         Route::post('/users', [UserController::class, 'store']);
         Route::get('/users/{id}', [UserController::class, 'show']);
         Route::put('/users/{id}', [UserController::class, 'update']);
         Route::patch('/users/{id}/status', [UserController::class, 'toggleStatus']);
         Route::delete('/users/{id}', [UserController::class, 'destroy']);
+
+        // Format /admin/users (Kompatibel dengan Frontend & Spesifikasi Khusus Admin)
+        Route::prefix('admin')->group(function () {
+            Route::get('/users', [UserController::class, 'index']);
+            Route::post('/users', [UserController::class, 'store']);
+            Route::get('/users/{id}', [UserController::class, 'show']);
+            Route::put('/users/{id}', [UserController::class, 'update']);
+            Route::patch('/users/{id}/toggle-active', [UserController::class, 'toggleStatus']);
+            Route::patch('/users/{id}/reset-password', [UserController::class, 'resetPassword']);
+            Route::delete('/users/{id}', [UserController::class, 'destroy']);
+        });
     });
 });
