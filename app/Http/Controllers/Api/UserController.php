@@ -101,7 +101,7 @@ class UserController extends Controller
 
         // Tentukan tenant_id
         $tenantId = $currentUser->role === 'super_admin'
-            ? $request->tenant_id
+            ? ($request->tenant_id ?? \App\Models\Tenant::first()?->id)
             : $currentUser->tenant_id;
 
         if (!$tenantId) {
@@ -151,15 +151,21 @@ class UserController extends Controller
         }
 
         // 3. Simpan Akun Pengguna Baru
-        $user = User::create([
+        $userData = [
             'tenant_id' => $tenantId,
             'name'      => $request->name,
             'email'     => $request->email,
             'password'  => Hash::make($request->password), // Hash adaptif bersalt (ER-2.3)
             'role'      => $request->role,
-            'phone'     => $request->phone,
             'is_active' => true,
-        ]);
+        ];
+
+        // Masukkan kolom phone hanya jika kolom tersebut ada di skema database
+        if ($request->filled('phone') && \Illuminate\Support\Facades\Schema::hasColumn('users', 'phone')) {
+            $userData['phone'] = $request->phone;
+        }
+
+        $user = User::create($userData);
 
         return response()->json([
             'success' => true,
@@ -214,7 +220,11 @@ class UserController extends Controller
             'password' => 'nullable|string|min:6',
         ]);
 
-        $updateData = $request->only(['name', 'email', 'role', 'phone']);
+        $updateFields = ['name', 'email', 'role'];
+        if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'phone')) {
+            $updateFields[] = 'phone';
+        }
+        $updateData = $request->only($updateFields);
 
         if ($request->filled('password')) {
             $updateData['password'] = Hash::make($request->password);
