@@ -26,7 +26,8 @@ export default function InvoicesAdmin() {
   useEffect(() => {
     getAllInvoices()
       .then((res) => {
-        if (res.success) setInvoices(res.data)
+        const data = res.data?.data ?? res.data ?? []
+        setInvoices(Array.isArray(data) ? data : [])
       })
       .catch(() => {})
       .finally(() => setLoading(false))

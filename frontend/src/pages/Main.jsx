@@ -17,7 +17,7 @@ export default function Main() {
   const t = LANDING_TEXT[lang]
 
   return (
-    <div className="font-['Plus_Jakarta_Sans',system-ui,sans-serif] text-[#1F2937] bg-[#F3F6FA] min-h-screen">
+    <div className="font-['Plus_Jakarta_Sans',system-ui,sans-serif] text-[#1F2937] bg-[#F3F6FA] min-h-screen" style={{ isolation: 'isolate' }}>
       <Navbar t={t} lang={lang} setLang={setLang} />
       <Hero t={t} />
       <Problem t={t} />

@@ -3,18 +3,17 @@ import { Link, useSearchParams } from 'react-router-dom'
 import api from '../services/api'
 import { usePackages } from '../hooks/usePackages'
 
-const PLANS = ['Basic', 'Standard', 'Pro']
 
 const T = {
   title: 'Daftarkan bimbel Anda',
   stepsAria: 'Tahap pendaftaran',
-  steps: ['Isi data', 'Menunggu persetujuan', 'Ruang kerja aktif'],
+  steps: ['Isi data', 'Pembayaran', 'Menunggu persetujuan', 'Ruang kerja aktif'],
   secBimbel: 'Data bimbel',
-  fName: 'Nama bimbel', fCity: 'Kota', fPhone: 'Nomor WhatsApp', fWs: 'Alamat ruang kerja',
+  fName: 'Nama bimbel', fCity: 'Kota', fWs: 'Alamat ruang kerja',
   wsOk: 'Alamat tersedia',
   secAdmin: 'Akun Admin Bimbel',
-  fAdminName: 'Nama lengkap', fPass: 'Kata sandi', passHint: 'Minimal 8 karakter.',
-  secPlan: 'Paket', perMonth: '/ bulan', upTo: 'Hingga [BATAS PENGGUNA] pengguna',
+  fAdminName: 'Nama lengkap', fPass: 'Kata sandi', fPhone: 'No. telepon', passHint: 'Minimal 8 karakter.',
+  secPlan: 'Paket', perMonth: '/ bulan', upTo: (n) => `Hingga ${n} pengguna`,
   planNote: 'Tagihan bulanan. Semua paket berisi seluruh fitur belajar; yang berbeda hanya batas pengguna.',
   consent: 'Saya setuju data siswa, nilai, dan materi hanya digunakan untuk pembelajaran oleh pihak berwenang di bimbel saya.',
   submitBtn: 'Kirim pendaftaran', submitting: 'Mendaftarkan...',
@@ -45,8 +44,8 @@ export default function Register() {
   const { packages, loading: pkgLoading } = usePackages()
 
   const [form, setForm] = useState({
-    bimbel_name: '', city: '', phone: '', workspace: '',
-    admin_name: '', email: '', password: '',
+    bimbel_name: '', city: '', workspace: '',
+    admin_name: '', email: '', phone: '', password: '',
   })
   const [selectedPkgId, setSelectedPkgId] = useState(null)
   const [consent, setConsent] = useState(false)
@@ -54,7 +53,38 @@ export default function Register() {
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
   const [result, setResult] = useState(null)
-  const [snapToken, setSnapToken] = useState(null)
+  const [snapToken, setSnapToken]       = useState(null)
+  const [paymentStatus, setPaymentStatus] = useState(null)
+  const [fetchingToken, setFetchingToken] = useState(false)
+
+  // Minta snap_token dari BE kalau belum ada (fallback)
+  const fetchAndPay = async () => {
+    if (snapToken) { openSnap(); return }
+    setFetchingToken(true)
+    try {
+      const r = await api.post('/checkout', { package_id: selectedPkgId })
+      const token = r.data?.data?.snap_token ?? r.data?.snap_token
+      if (token) {
+        setSnapToken(token)
+        setTimeout(() => {
+          if (window.snap) {
+            window.snap.pay(token, {
+              onSuccess: () => setPaymentStatus('success'),
+              onPending: () => setPaymentStatus('pending'),
+              onError:   () => setPaymentStatus('error'),
+              onClose:   () => setPaymentStatus('closed'),
+            })
+          }
+        }, 100)
+      } else {
+        alert('Token pembayaran tidak tersedia. Hubungi admin.')
+      }
+    } catch {
+      alert('Gagal memuat halaman pembayaran. Coba lagi.')
+    } finally {
+      setFetchingToken(false)
+    }
+  }
 
   useEffect(() => {
     const pkgId = searchParams.get('package')
@@ -66,7 +96,8 @@ export default function Register() {
       const featured = packages.find((p) => p.is_featured) || packages[0]
       setSelectedPkgId(featured.id)
     }
-  }, [packages])
+  // oxlint-disable-next-line react-hooks/exhaustive-deps
+  }, [packages.length])
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
 
@@ -89,6 +120,7 @@ export default function Register() {
       const response = await api.post('/register', {
         name: form.admin_name,
         email: form.email,
+        ...(form.phone ? { phone: form.phone } : {}),
         password: form.password,
         password_confirmation: form.password,
         tenant_name: form.bimbel_name,
@@ -108,6 +140,27 @@ export default function Register() {
 
       if (res.data.snap_token) setSnapToken(res.data.snap_token)
       setDone(true)
+
+      // Auto buka Midtrans Snap setelah register berhasil
+      // Coba berbagai kemungkinan posisi snap_token di response BE
+      const token = res.data.snap_token
+        ?? res.data.payment?.snap_token
+        ?? res.snap_token
+        ?? null
+
+      if (token) {
+        setSnapToken(token)
+        setTimeout(() => {
+          if (window.snap) {
+            window.snap.pay(token, {
+              onSuccess: () => setPaymentStatus('success'),
+              onPending: () => setPaymentStatus('pending'),
+              onError:   () => setPaymentStatus('error'),
+              onClose:   () => setPaymentStatus('closed'),
+            })
+          }
+        }, 300)
+      }
     } catch (err) {
       const msg = err.response?.data?.message || err.message || 'Pendaftaran gagal.'
       setError(msg)
@@ -131,7 +184,10 @@ export default function Register() {
     }
   }
 
-  const curStep = done ? 1 : 0
+  const curStep = done
+    ? paymentStatus === 'success' ? 2
+    : 1
+    : 0
 
   return (
     <div className="min-h-screen bg-[#F3F6FA] font-['Plus_Jakarta_Sans',system-ui,sans-serif] text-[#1F2937]">
@@ -180,10 +236,6 @@ export default function Register() {
                   <input value={form.city} onChange={set('city')} className={inputCls} placeholder="Balikpapan" />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[13px] font-bold">{t.fPhone}</label>
-                  <input value={form.phone} onChange={set('phone')} type="tel" className={inputCls} placeholder="08xx xxxx xxxx" />
-                </div>
-                <div className="flex flex-col gap-1.5">
                   <label className="text-[13px] font-bold">{t.fWs} *</label>
                   <div className="flex items-center h-11 border border-[#C7C7CF] rounded-[10px] overflow-hidden bg-white focus-within:border-[#0D47A1] transition">
                     <input value={form.workspace} onChange={set('workspace')} className="flex-1 min-w-0 h-full border-0 px-3 text-[15px] font-medium text-[#1F2937] focus:outline-none bg-transparent" placeholder="pelita-nusantara" />
@@ -205,6 +257,21 @@ export default function Register() {
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[13px] font-bold">Email *</label>
                   <input value={form.email} onChange={set('email')} type="email" className={inputCls} placeholder="hendra@pelita.id" />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[13px] font-bold">{t.fPhone}</label>
+                  <div className="flex h-11 border border-[#C7C7CF] rounded-[10px] overflow-hidden focus-within:border-[#0D47A1] transition bg-white">
+                    <span className="flex items-center px-3 text-[14px] font-semibold text-[#1F2937] border-r border-[#ECECF0] bg-[#F3F6FA] select-none">
+                      +62
+                    </span>
+                    <input
+                      value={form.phone}
+                      onChange={set('phone')}
+                      type="tel"
+                      placeholder="812-3456-7890"
+                      className="flex-1 min-w-0 h-full border-0 px-3 text-[15px] font-medium text-[#1F2937] focus:outline-none bg-transparent"
+                    />
+                  </div>
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[13px] font-bold">{t.fPass} *</label>
@@ -289,53 +356,162 @@ export default function Register() {
           </div>
         )}
 
-        {/* Done state */}
+        {/* Done state — fokus pembayaran */}
         {done && result && (
-          <section role="status" className="max-w-[640px] mx-auto mt-6 bg-white border border-[#E6E6EA] rounded-[22px] p-9 flex flex-col gap-4 items-start">
-            <span className="text-[13px] font-bold bg-[#DBEAFE] text-[#1e40af] px-3 py-1.5 rounded-full">
-              {t.statusPending}
-            </span>
-            <h1 className="m-0 text-[30px] font-extrabold tracking-[-0.02em]">{t.doneTitle}</h1>
-            <p className="m-0 text-base leading-relaxed text-[#4A4A55]">{t.doneBody}</p>
+          <div className="max-w-[520px] mx-auto mt-4 flex flex-col gap-4">
 
-            <dl className="m-0 grid grid-cols-[max-content_1fr] gap-x-5 gap-y-2 text-sm">
-              <dt className="text-[#5F6368]">{t.labelBimbel}</dt>
-              <dd className="m-0 font-bold">{result.bimbel_name}</dd>
-              <dt className="text-[#5F6368]">{t.labelEmail}</dt>
-              <dd className="m-0 font-bold">{result.email}</dd>
-              <dt className="text-[#5F6368]">{t.labelWs}</dt>
-              <dd className="m-0 font-mono">{result.workspace}.bims.id</dd>
-              <dt className="text-[#5F6368]">{t.labelPlan}</dt>
-              <dd className="m-0 font-bold">{result.plan}</dd>
-            </dl>
+            {/* Payment card */}
+            <section className="bg-white border border-[#E6E6EA] rounded-[22px] p-8 flex flex-col gap-6 shadow-[0_8px_32px_rgba(13,71,161,0.08)]">
 
-            <div className="flex flex-wrap gap-2.5">
-              {/* Tombol bayar sekarang kalau ada snap_token */}
-              {snapToken && (
+              {/* Header */}
+              <div className="flex flex-col gap-1.5">
+                {paymentStatus === 'success' ? (
+                  <span className="self-start text-[12px] font-bold bg-[#E6F4EA] text-[#1E6B3A] px-3 py-1.5 rounded-full flex items-center gap-1.5">
+                    <svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    Pembayaran Berhasil
+                  </span>
+                ) : paymentStatus === 'pending' ? (
+                  <span className="self-start text-[12px] font-bold bg-[#FCEFC9] text-[#6B4A00] px-3 py-1.5 rounded-full">⏳ Menunggu Konfirmasi</span>
+                ) : (
+                  <span className="self-start text-[12px] font-bold bg-[#EEF4FF] text-[#0D47A1] px-3 py-1.5 rounded-full">Langkah 2 dari 4 · Pembayaran</span>
+                )}
+                <h1 className="m-0 text-[26px] font-extrabold tracking-[-0.02em]">
+                  {paymentStatus === 'success' ? 'Selesai!' : 'Selesaikan Pembayaran'}
+                </h1>
+                <p className="m-0 text-[14px] text-[#5F6368]">
+                  {paymentStatus === 'success'
+                    ? 'Bimbel Anda sedang diproses dan akan aktif setelah disetujui.'
+                    : paymentStatus === 'pending'
+                    ? 'Pembayaran sedang diverifikasi. Bimbel akan aktif otomatis.'
+                    : 'Akun Anda sudah dibuat. Selesaikan pembayaran untuk mengaktifkan bimbel.'}
+                </p>
+              </div>
+
+              {/* Paket & nominal */}
+              <div className="bg-[#F3F6FA] rounded-[14px] p-5 flex flex-col gap-3">
+                <span className="text-[12px] font-bold text-[#5F6368] uppercase tracking-widest">Ringkasan Pesanan</span>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="font-extrabold text-[17px] text-[#1F2937]">{result.plan}</span>
+                    <span className="text-[13px] text-[#5F6368]">
+                      {packages.find((p) => p.id === selectedPkgId)?.max_users ?? '—'} pengguna · {packages.find((p) => p.id === selectedPkgId)?.duration_days ?? 30} hari
+                    </span>
+                  </div>
+                  <span className="font-mono text-[24px] font-semibold text-[#0D47A1]">
+                    {packages.find((p) => p.id === selectedPkgId)
+                      ? formatPrice(packages.find((p) => p.id === selectedPkgId).price)
+                      : '—'}
+                  </span>
+                </div>
+                <div className="pt-3 border-t border-[#E6E6EA] flex items-center justify-between gap-3 text-[13px] text-[#5F6368]">
+                  <span>Bimbel</span>
+                  <span className="font-semibold text-[#1F2937]">{result.bimbel_name}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3 text-[13px] text-[#5F6368]">
+                  <span>Email admin</span>
+                  <span className="font-semibold text-[#1F2937]">{result.email}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3 text-[13px] text-[#5F6368]">
+                  <span>Alamat ruang kerja</span>
+                  <span className="font-mono text-[#0D47A1]">{result.workspace}.bims.id</span>
+                </div>
+              </div>
+
+              {/* CTA Pembayaran */}
+              {!paymentStatus && (
                 <button
                   type="button"
-                  onClick={openSnap}
-                  className="h-12 px-5 rounded-xl border-0 bg-[#3EB6FF] text-[#0a3880] font-extrabold text-[15px] cursor-pointer hover:bg-[#60c8ff] transition flex items-center gap-2"
+                  onClick={fetchAndPay}
+                  disabled={fetchingToken}
+                  className="w-full h-[52px] rounded-xl border-0 bg-[#0D47A1] text-white font-extrabold text-[16px] cursor-pointer hover:bg-[#0a3880] transition flex items-center justify-center gap-2.5 disabled:opacity-60"
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" className="flex-none">
-                    <path d="M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z M2 10h20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  Bayar Sekarang
+                  {fetchingToken ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin flex-none" />
+                      Memuat halaman pembayaran...
+                    </>
+                  ) : (
+                    <>
+                      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" className="flex-none">
+                        <path d="M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z M2 10h20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      Bayar Sekarang
+                    </>
+                  )}
                 </button>
               )}
-              <Link to="/" className="inline-flex items-center h-12 px-5 rounded-xl bg-[#0D47A1] text-white no-underline font-bold hover:bg-[#0a3880] transition">
-                {t.backHome}
-              </Link>
-              <button
-                type="button"
-                onClick={() => setDone(false)}
-                className="h-12 px-[18px] rounded-xl border border-[#1F2937] bg-white text-[#1F2937] font-bold text-[15px] cursor-pointer hover:bg-[#F3F6FA] transition"
-              >
-                {t.editAgain}
-              </button>
-            </div>
-          </section>
+
+              {/* Bayar ulang */}
+              {(paymentStatus === 'closed' || paymentStatus === 'error') && (
+                <div className="flex flex-col gap-2.5">
+                  {paymentStatus === 'error' && (
+                    <div className="px-4 py-3 rounded-[10px] bg-[#FDE7E5] text-[#8A1C12] text-sm font-semibold">
+                      Pembayaran gagal. Silakan coba lagi.
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={fetchAndPay}
+                    disabled={fetchingToken}
+                    className="w-full h-[52px] rounded-xl border-0 bg-[#0D47A1] text-white font-extrabold text-[16px] cursor-pointer hover:bg-[#0a3880] transition flex items-center justify-center gap-2.5 disabled:opacity-60"
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" className="flex-none">
+                      <path d="M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z M2 10h20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    Coba Bayar Lagi
+                  </button>
+                </div>
+              )}
+
+              {/* Success state */}
+              {paymentStatus === 'success' && (
+                <div className="flex flex-col gap-2.5">
+                  <div className="px-4 py-3.5 rounded-[12px] bg-[#E6F4EA] text-[#1E6B3A] text-sm font-semibold flex items-center gap-2">
+                    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" className="flex-none">
+                      <path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    Pembayaran berhasil! Cek email untuk konfirmasi.
+                  </div>
+                  <Link to="/" className="w-full h-12 rounded-xl bg-[#F3F6FA] text-[#1F2937] no-underline font-bold text-sm flex items-center justify-center hover:bg-[#E6E6EA] transition">
+                    Kembali ke beranda
+                  </Link>
+                </div>
+              )}
+
+              {/* Pending state */}
+              {paymentStatus === 'pending' && (
+                <div className="flex flex-col gap-2.5">
+                  <div className="px-4 py-3.5 rounded-[12px] bg-[#FCEFC9] text-[#6B4A00] text-sm font-semibold">
+                    Selesaikan pembayaran sesuai instruksi yang dikirim ke email Anda.
+                  </div>
+                  <Link to="/" className="w-full h-12 rounded-xl bg-[#F3F6FA] text-[#1F2937] no-underline font-bold text-sm flex items-center justify-center hover:bg-[#E6E6EA] transition">
+                    Kembali ke beranda
+                  </Link>
+                </div>
+              )}
+
+              {/* Ubah data — selalu ada selama belum sukses */}
+              {paymentStatus !== 'success' && paymentStatus !== 'pending' && (
+                <button
+                  type="button"
+                  onClick={() => { setDone(false); setPaymentStatus(null); setSnapToken(null) }}
+                  className="w-full h-11 rounded-xl border border-[#C7C7CF] bg-transparent text-[#5F6368] font-semibold text-sm cursor-pointer hover:bg-[#F3F6FA] hover:text-[#1F2937] transition"
+                >
+                  ← Ubah data pendaftaran
+                </button>
+              )}
+            </section>
+
+            {/* Info keamanan */}
+            <p className="text-[12px] text-[#5F6368] text-center flex items-center justify-center gap-1.5">
+              <svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+              </svg>
+              Pembayaran diproses aman oleh Midtrans
+            </p>
+          </div>
         )}
+
       </main>
     </div>
   )

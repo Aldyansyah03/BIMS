@@ -1,13 +1,8 @@
 import api from './api'
 
 // GET /api/packages — publik
-export const getPackages = async () => {
-  const response = await api.get('/packages')
-  return response.data
-}
+export const getPackages = () => api.get('/packages')
 
 // POST /api/checkout — perlu token
-export const checkout = async (packageId) => {
-  const response = await api.post('/checkout', { package_id: packageId })
-  return response.data
-}
+export const checkout = (packageId) =>
+  api.post('/checkout', { package_id: packageId })

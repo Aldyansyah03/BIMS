@@ -65,7 +65,7 @@ export default function Pricing({ t }) {
                 </span>
 
                 <ul className="m-0 pl-[18px] flex flex-col gap-2 text-sm leading-relaxed">
-                  {pkg.features.map((item) => (
+                  {(pkg.features ?? []).map((item) => (
                     <li key={item}>{item}</li>
                   ))}
                 </ul>

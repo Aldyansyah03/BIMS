@@ -8,7 +8,8 @@ export function usePackages() {
   useEffect(() => {
     getPackages()
       .then((res) => {
-        if (res.success) setPackages(res.data)
+        const data = res.data?.data ?? res.data ?? []
+        setPackages(Array.isArray(data) ? data : [])
       })
       .catch(() => {})
       .finally(() => setLoading(false))

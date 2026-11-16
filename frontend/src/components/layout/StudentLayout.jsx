@@ -16,18 +16,30 @@ const NAV_ITEMS = {
   ],
 }
 
+const ROLE_HOME = {
+  super_admin:  '/super-admin',
+  admin_bimbel: '/admin/dashboard',
+  tutor:        '/tutor',
+  student:      '/student',
+}
+
 export default function StudentLayout({ children, lang, setLang }) {
-  const { logout } = useAuth()
+  const { logout, user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
 
   const btnOn = 'h-8 min-w-[40px] px-3 rounded-full bg-[#0D47A1] text-white text-sm font-bold border-0 cursor-pointer'
   const btnOff = 'h-8 min-w-[40px] px-3 rounded-full bg-transparent text-[#1F2937] text-sm font-bold border-0 cursor-pointer'
 
-  const handleLogout = () => {
-    logout()
+  const handleLogout = async () => {
+    await logout()
     navigate('/login')
   }
+
+  // Inisial dari nama user (maks 2 huruf)
+  const initials = user?.name
+    ? user.name.split(' ').slice(0, 2).map((w) => w[0].toUpperCase()).join('')
+    : '?'
 
   const navItems = NAV_ITEMS[lang]
 
@@ -36,7 +48,7 @@ export default function StudentLayout({ children, lang, setLang }) {
       {/* Header */}
       <header className="bg-white border-b border-[#E6E6EA] flex-none z-40">
         <div className="max-w-[1200px] mx-auto px-6 py-3 flex flex-wrap items-center gap-3 gap-x-6">
-          <Link to="/" className="flex items-center no-underline flex-none">
+          <Link to={ROLE_HOME[user?.role] ?? '/student'} className="flex items-center no-underline flex-none">
             <img src="/logo.png" alt="BIMS" className="h-10 w-auto object-contain" />
           </Link>
 
@@ -69,14 +81,15 @@ export default function StudentLayout({ children, lang, setLang }) {
             <button type="button" onClick={() => setLang('id')} aria-pressed={lang === 'id'} className={lang === 'id' ? btnOn : btnOff}>ID</button>
           </div>
 
-          {/* Avatar */}
+          {/* Avatar / logout */}
           <button
             type="button"
             onClick={handleLogout}
-            aria-label="Account: Aditya Pratama"
+            aria-label={`Akun: ${user?.name ?? 'Student'} — klik untuk keluar`}
+            title={user?.name ?? 'Logout'}
             className="w-11 h-11 rounded-full bg-[#0D47A1] text-white flex items-center justify-center font-extrabold text-sm border-0 cursor-pointer hover:bg-[#0a3880] transition"
           >
-            AP
+            {initials}
           </button>
         </div>
       </header>

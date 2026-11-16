@@ -1,13 +1,7 @@
 import api from './api'
 
 // GET /api/my-invoices — Admin Bimbel
-export const getMyInvoices = async () => {
-  const response = await api.get('/my-invoices')
-  return response.data
-}
+export const getMyInvoices = () => api.get('/my-invoices')
 
 // GET /api/admin/invoices — Super Admin
-export const getAllInvoices = async () => {
-  const response = await api.get('/admin/invoices')
-  return response.data
-}
+export const getAllInvoices = () => api.get('/admin/invoices')
