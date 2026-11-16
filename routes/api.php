@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Route;
 // Endpoint Publik
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/register', [AuthController::class, 'register']);
+Route::post('/register/initiate', [PaymentController::class, 'initiateRegistration']); // Inisiasi pembayaran tanpa simpan ke DB
 Route::get('/packages', [PackageController::class, 'index']);
 Route::post('/midtrans-callback', [PaymentController::class, 'callback']);
 
