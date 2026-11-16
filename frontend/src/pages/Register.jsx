@@ -16,7 +16,7 @@ const T = {
   secPlan: 'Paket', perMonth: '/ bulan', upTo: (n) => `Hingga ${n} pengguna`,
   planNote: 'Tagihan bulanan. Semua paket berisi seluruh fitur belajar; yang berbeda hanya batas pengguna.',
   consent: 'Saya setuju data siswa, nilai, dan materi hanya digunakan untuk pembelajaran oleh pihak berwenang di bimbel saya.',
-  submitBtn: 'Kirim pendaftaran', submitting: 'Mendaftarkan...',
+  submitBtn: 'Lanjut ke Pembayaran', submitting: 'Menyiapkan pembayaran...',
   nextTitle: 'Langkah berikutnya',
   next: [
     'Pendaftaran tersimpan dengan status Menunggu.',
@@ -117,39 +117,35 @@ export default function Register() {
 
     setLoading(true)
     try {
-      const response = await api.post('/register', {
+      // Kirim data ke BE untuk dapat snap_token — data BELUM disimpan ke DB
+      const response = await api.post('/register/initiate', {
         name: form.admin_name,
         email: form.email,
         ...(form.phone ? { phone: form.phone } : {}),
         password: form.password,
         password_confirmation: form.password,
         tenant_name: form.bimbel_name,
-        tenant_slug: form.workspace,
         package_id: selectedPkgId,
       })
       const res = response.data
 
-      if (!res.success) throw new Error(res.message || 'Pendaftaran gagal.')
+      if (!res.success) throw new Error(res.message || 'Gagal memulai pendaftaran.')
 
+      // Simpan info untuk ditampilkan di halaman pembayaran
       setResult({
-        bimbel_name: res.data.tenant.name,
-        email: res.data.user.email,
-        workspace: res.data.tenant.slug,
+        bimbel_name: form.bimbel_name,
+        email: form.email,
+        workspace: form.bimbel_name ? form.bimbel_name.toLowerCase().replace(/\s+/g, '-') : '',
         plan: packages.find((p) => p.id === selectedPkgId)?.name || '',
+        order_id: res.data.order_id,
       })
 
-      if (res.data.snap_token) setSnapToken(res.data.snap_token)
-      setDone(true)
-
-      // Auto buka Midtrans Snap setelah register berhasil
-      // Coba berbagai kemungkinan posisi snap_token di response BE
-      const token = res.data.snap_token
-        ?? res.data.payment?.snap_token
-        ?? res.snap_token
-        ?? null
+      const token = res.data.snap_token ?? null
 
       if (token) {
         setSnapToken(token)
+        setDone(true)
+        // Auto buka Midtrans Snap
         setTimeout(() => {
           if (window.snap) {
             window.snap.pay(token, {
@@ -160,6 +156,8 @@ export default function Register() {
             })
           }
         }, 300)
+      } else {
+        throw new Error('Token pembayaran tidak tersedia. Hubungi admin.')
       }
     } catch (err) {
       const msg = err.response?.data?.message || err.message || 'Pendaftaran gagal.'
@@ -383,7 +381,7 @@ export default function Register() {
                     ? 'Bimbel Anda sedang diproses dan akan aktif setelah disetujui.'
                     : paymentStatus === 'pending'
                     ? 'Pembayaran sedang diverifikasi. Bimbel akan aktif otomatis.'
-                    : 'Akun Anda sudah dibuat. Selesaikan pembayaran untuk mengaktifkan bimbel.'}
+                    : 'Pembayaran menentukan apakah akun Anda dibuat. Selesaikan pembayaran untuk mendaftarkan bimbel.'}
                 </p>
               </div>
 
