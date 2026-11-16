@@ -20,6 +20,13 @@ const NAV_ITEMS = {
   ],
 }
 
+const ROLE_HOME = {
+  super_admin:  '/super-admin',
+  admin_bimbel: '/admin/dashboard',
+  tutor:        '/tutor',
+  student:      '/student',
+}
+
 export default function SuperAdminLayout({ children, lang, setLang }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
@@ -40,8 +47,8 @@ export default function SuperAdminLayout({ children, lang, setLang }) {
       {/* Header — dark */}
       <header className="bg-[#1F2937] text-white flex-none z-40">
         <div className="px-6 py-3 flex flex-wrap items-center gap-3 gap-x-5">
-          <Link to="/" className="flex items-center no-underline flex-none">
-            <img src="/logo.png" alt="BIMS" className="h-10 w-auto object-contain brightness-0 invert" />
+          <Link to={ROLE_HOME[user?.role] ?? '/super-admin'} className="flex items-center no-underline flex-none">
+            <img src="/logo.png" alt="BIMS" className="h-10 w-auto object-contain bg-white rounded-lg px-1.5 py-0.5" />
           </Link>
 
           <span className="font-mono text-[12px] font-semibold tracking-widest uppercase bg-[#E3B53B] text-[#1F2937] px-2.5 py-1.5 rounded-md">

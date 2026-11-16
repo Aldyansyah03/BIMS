@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
+import { Link } from 'react-router-dom'
 import AdminLayout from '../components/layout/AdminLayout'
 import { getDashboard, createSession, getAdminClasses, getAdminTutors, exportPerformance } from '../services/adminService'
+import { useAuth } from '../hooks/useAuth'
 
 // ── Icon paths ────────────────────────────────────────────────────────────────
 const ICONS = {
@@ -89,6 +91,8 @@ function fmtT(v) {
 export default function AdminDashboard() {
   const [lang, setLang] = useState('id')
   const t = TEXT[lang]
+  const { user } = useAuth()
+  const bimbelName = user?.tenant?.name || user?.tenant_name || 'Bimbel'
 
   // ── Dashboard data ───────────────────────────────────────────────────────────
   const [dash, setDash] = useState(null)
@@ -100,7 +104,15 @@ export default function AdminDashboard() {
     setError(null)
     getDashboard()
       .then((res) => setDash(res.data.data ?? res.data))
-      .catch((err) => setError(err.response?.data?.message ?? err.message ?? 'Error'))
+      .catch((err) => {
+        // Kalau endpoint belum ada di BE, tampilkan dashboard kosong bukan error screen
+        const msg = err.response?.data?.message ?? err.message ?? 'Error'
+        if (err.response?.status === 404) {
+          setDash({}) // tampilkan dashboard kosong
+        } else {
+          setError(msg)
+        }
+      })
       .finally(() => setLoading(false))
   }, [])
 
@@ -111,8 +123,8 @@ export default function AdminDashboard() {
   const [formTutors, setFormTutors] = useState([])
 
   useEffect(() => {
-    getAdminClasses().then((r) => setFormClasses(r.data.data ?? r.data ?? [])).catch(() => {})
-    getAdminTutors().then((r) => setFormTutors(r.data.data ?? r.data ?? [])).catch(() => {})
+    getAdminClasses().then((r) => setFormClasses(r.data.data ?? r.data ?? [])).catch(() => setFormClasses([]))
+    getAdminTutors().then((r) => setFormTutors(r.data.data ?? r.data ?? [])).catch(() => setFormTutors([]))
   }, [])
 
   // ── Add-session form state ───────────────────────────────────────────────────
@@ -231,48 +243,81 @@ export default function AdminDashboard() {
 
   return (
     <AdminLayout lang={lang} setLang={setLang}>
+      <div className="p-6 flex flex-col gap-6">
 
-      {/* ── Plan banner ───────────────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-center gap-3 gap-x-6 px-5 py-4 bg-white border border-[#E6E6EA] rounded-[14px] mb-6">
-        <span className="font-bold text-[15px]">
-          {plan.name ?? '—'} · {t.planMonthly}
-        </span>
-        <span className="text-sm text-[#4A4A55]">
-          {t.planActive} {plan.active_until ?? '—'}
-        </span>
-        <div className="flex-1 min-w-[200px] flex items-center gap-2.5">
-          <div
-            role="img"
-            aria-label={`${usersUsed} ${t.usersOf} ${usersLimit} ${t.usersLabel}`}
-            className="flex-1 h-2 bg-[#DBEAFE] rounded-full overflow-hidden"
-          >
-            <div className="h-full bg-[#0D47A1] rounded-full" style={{ width: `${usersPercent}%` }} />
+        {/* ── Page header + plan banner ─────────────────────────────────── */}
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex flex-col gap-1">
+            <h1 className="m-0 text-[28px] font-extrabold tracking-[-0.02em]">{t.title}</h1>
+            <span className="text-sm text-[#5F6368]">
+              {bimbelName} · {lang === 'id' ? 'Selamat datang kembali' : 'Welcome back'}
+            </span>
           </div>
-          <span className="font-mono text-[13px] font-semibold">{usersUsed} / {usersLimit}</span>
+
+          {/* Plan pill */}
+          <div className="flex items-center gap-3 bg-white border border-[#E6E6EA] rounded-2xl px-4 py-2.5 shadow-[0_2px_8px_rgba(13,71,161,0.05)]">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[12px] font-bold text-[#1F2937]">
+                {plan.name ?? '—'} · {t.planMonthly}
+              </span>
+              <span className="text-[11px] text-[#5F6368]">
+                {t.planActive} {plan.active_until ?? '—'}
+              </span>
+            </div>
+            <div className="flex flex-col gap-1 min-w-[120px]">
+              <div
+                role="img"
+                aria-label={`${usersUsed} ${t.usersOf} ${usersLimit} ${t.usersLabel}`}
+                className="h-1.5 bg-[#DBEAFE] rounded-full overflow-hidden"
+              >
+                <div className="h-full bg-[#0D47A1] rounded-full transition-all" style={{ width: `${usersPercent}%` }} />
+              </div>
+              <span className="font-mono text-[11px] text-[#5F6368]">{usersUsed} / {usersLimit} {t.usersLabel}</span>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <h1 className="m-0 mb-6 text-[30px] font-extrabold tracking-[-0.02em]">{t.title}</h1>
-
-      {/* ── KPI cards ─────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-6">
-        {kpiCards.map((k) => (
-          <div key={k.key} className="bg-white border border-[#E6E6EA] rounded-2xl p-5 flex flex-col gap-1.5">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[13px] font-semibold text-[#5F6368]">{t.kpiLabels[k.key]}</span>
-              <span className="w-9 h-9 rounded-[10px] bg-[#EEF4FF] text-[#0D47A1] flex items-center justify-center flex-none">
-                <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+        {/* ── KPI cards — landing feature card style, clickable ──────────── */}
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-4">
+          {kpiCards.map((k) => {
+            const KPI_LINKS = {
+              students: '/admin/users',
+              tutors:   '/admin/users',
+              classes:  '/admin/classes',
+              avg:      null,
+            }
+            const href = KPI_LINKS[k.key]
+            const CardEl = href ? Link : 'div'
+            const cardProps = href ? { to: href } : {}
+            return (
+              <CardEl
+                key={k.key}
+                {...cardProps}
+                className="bg-white border border-[#E6E6EA] rounded-[18px] p-5 flex flex-col gap-3 hover:shadow-[0_8px_24px_rgba(13,71,161,0.08)] hover:border-[#BFDBFE] transition-all no-underline text-[#1F2937] group"
+              >
+              <span className="w-[46px] h-[46px] rounded-[12px] bg-[#EEF4FF] text-[#0D47A1] flex items-center justify-center flex-none group-hover:bg-[#DBEAFE] transition-all">
+                <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
                   <path d={ICONS[k.icon]} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </span>
-            </div>
-            <span className="font-mono text-[32px] font-semibold">{k.value}</span>
-          </div>
-        ))}
-      </div>
+              <div className="flex flex-col gap-0.5">
+                <span className="font-mono text-[30px] font-semibold leading-none">{k.value}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[13px] font-medium text-[#5F6368]">{t.kpiLabels[k.key]}</span>
+                  {KPI_LINKS[k.key] && (
+                    <svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true" className="text-[#C7C7CF] group-hover:text-[#0D47A1] transition-all flex-none">
+                      <path d="M5 12h14 M13 6l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </div>
+              </div>
+            </CardEl>
+            )
+          })}
+        </div>
 
-      <div className="flex flex-wrap gap-5 mb-6">
-        {/* ── Weekly schedule ──────────────────────────────────────────────── */}
+        <div className="flex flex-wrap gap-5">
+          {/* ── Weekly schedule ────────────────────────────────────────────── */}
         <section aria-labelledby="week-h" className="flex-[2_1_560px] min-w-0 bg-white border border-[#E6E6EA] rounded-[18px] p-6 flex flex-col gap-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 id="week-h" className="m-0 text-[19px] font-extrabold">{t.weekTitle}</h2>
@@ -431,6 +476,52 @@ export default function AdminDashboard() {
         </section>
       </div>
 
+      {/* ── Quick links ───────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
+        {[
+          {
+            href: '/admin/users',
+            icon: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0z M19 8v6 M22 11h-6',
+            label: lang === 'id' ? 'Tambah siswa / tutor' : 'Add student / tutor',
+            sub:   lang === 'id' ? 'Buat akun pengguna baru' : 'Create new user accounts',
+            color: 'text-[#0D47A1] bg-[#EEF4FF]',
+          },
+          {
+            href: '/admin/classes',
+            icon: 'M2 4h20 M4 4v11a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V4 M12 16v4 M8 21h8',
+            label: lang === 'id' ? 'Kelola kelas' : 'Manage classes',
+            sub:   lang === 'id' ? 'Atur tutor & siswa per kelas' : 'Assign tutors & students',
+            color: 'text-[#1E6B3A] bg-[#E6F4EA]',
+          },
+          {
+            href: '/admin/invoices',
+            icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M8 13h8 M8 17h5',
+            label: lang === 'id' ? 'Lihat tagihan' : 'View invoices',
+            sub:   lang === 'id' ? 'Bayar invoice langganan' : 'Pay subscription invoices',
+            color: 'text-[#6B4A00] bg-[#FCEFC9]',
+          },
+        ].map((item) => (
+          <Link
+            key={item.href}
+            to={item.href}
+            className="flex items-center gap-4 bg-white border border-[#E6E6EA] rounded-[18px] p-5 no-underline text-[#1F2937] hover:shadow-[0_8px_24px_rgba(13,71,161,0.08)] hover:border-[#BFDBFE] transition-all group"
+          >
+            <span className={`w-11 h-11 rounded-[12px] flex items-center justify-center flex-none ${item.color}`}>
+              <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+                <path d={item.icon} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+            <div className="flex flex-col gap-0.5 min-w-0">
+              <span className="font-bold text-[14px] text-[#1F2937]">{item.label}</span>
+              <span className="text-[12px] text-[#5F6368]">{item.sub}</span>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" className="flex-none text-[#C7C7CF] group-hover:text-[#0D47A1] transition-all ml-auto">
+              <path d="M5 12h14 M13 6l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </Link>
+        ))}
+      </div>
+
       {/* ── Performance table ─────────────────────────────────────────────── */}
       <section aria-labelledby="perf-h" className="bg-white border border-[#E6E6EA] rounded-[18px] overflow-hidden">
         <div className="px-6 py-5 flex flex-wrap items-center justify-between gap-3 border-b border-[#ECECF0]">
@@ -487,6 +578,7 @@ export default function AdminDashboard() {
           </div>
         )}
       </section>
+      </div>  {/* end p-6 wrapper */}
     </AdminLayout>
   )
 }

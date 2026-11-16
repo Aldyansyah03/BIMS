@@ -1,57 +1,95 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 
-const NAV_ITEMS = {
+const NAV_GROUPS = {
   en: [
-    { label: 'Dashboard', href: '/admin/dashboard', icon: 'M3 3h7v7H3z M14 3h7v7h-7z M14 14h7v7h-7z M3 14h7v7H3z' },
-    { label: 'Students & tutors', href: '/admin/classes', icon: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0z M22 21v-2a4 4 0 0 0-3-3.9 M16 3.1a4 4 0 0 1 0 7.8' },
-    { label: 'Classes', href: '/admin/classes', icon: 'M2 4h20 M4 4v11a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V4 M12 16v4 M8 21h8' },
-    { label: 'Reports', href: '/admin/dashboard', icon: 'M3 3v18h18 M7 16v-5 M12 16V8 M17 16V5' },
-    { label: 'Invoices', href: '/admin/invoices', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M8 13h8 M8 17h5' },
-    { label: 'Subscription', href: '/admin/dashboard', icon: 'M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z M2 10h20' },
+    {
+      items: [
+        { label: 'Dashboard',        href: '/admin/dashboard', icon: 'M3 3h7v7H3z M14 3h7v7h-7z M14 14h7v7h-7z M3 14h7v7H3z' },
+      ],
+    },
+    {
+      label: 'Manage',
+      items: [
+        { label: 'Students & tutors', href: '/admin/users',    icon: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0z M22 21v-2a4 4 0 0 0-3-3.9 M16 3.1a4 4 0 0 1 0 7.8' },
+        { label: 'Classes',           href: '/admin/classes',  icon: 'M2 4h20 M4 4v11a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V4 M12 16v4 M8 21h8' },
+      ],
+    },
+    {
+      label: 'Finance',
+      items: [
+        { label: 'Invoices',          href: '/admin/invoices',  icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M8 13h8 M8 17h5' },
+        { label: 'Subscription',      href: '/admin/dashboard', icon: 'M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z M2 10h20' },
+      ],
+    },
   ],
   id: [
-    { label: 'Dasbor', href: '/admin/dashboard', icon: 'M3 3h7v7H3z M14 3h7v7h-7z M14 14h7v7h-7z M3 14h7v7H3z' },
-    { label: 'Siswa & tutor', href: '/admin/classes', icon: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0z M22 21v-2a4 4 0 0 0-3-3.9 M16 3.1a4 4 0 0 1 0 7.8' },
-    { label: 'Kelas', href: '/admin/classes', icon: 'M2 4h20 M4 4v11a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V4 M12 16v4 M8 21h8' },
-    { label: 'Laporan', href: '/admin/dashboard', icon: 'M3 3v18h18 M7 16v-5 M12 16V8 M17 16V5' },
-    { label: 'Tagihan', href: '/admin/invoices', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M8 13h8 M8 17h5' },
-    { label: 'Langganan', href: '/admin/dashboard', icon: 'M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z M2 10h20' },
+    {
+      items: [
+        { label: 'Dasbor',           href: '/admin/dashboard', icon: 'M3 3h7v7H3z M14 3h7v7h-7z M14 14h7v7h-7z M3 14h7v7H3z' },
+      ],
+    },
+    {
+      label: 'Kelola',
+      items: [
+        { label: 'Siswa & tutor',    href: '/admin/users',    icon: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0z M22 21v-2a4 4 0 0 0-3-3.9 M16 3.1a4 4 0 0 1 0 7.8' },
+        { label: 'Kelas',            href: '/admin/classes',  icon: 'M2 4h20 M4 4v11a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V4 M12 16v4 M8 21h8' },
+      ],
+    },
+    {
+      label: 'Keuangan',
+      items: [
+        { label: 'Tagihan',          href: '/admin/invoices',  icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M8 13h8 M8 17h5' },
+        { label: 'Langganan',        href: '/admin/dashboard', icon: 'M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z M2 10h20' },
+      ],
+    },
   ],
+}
+
+const ROLE_HOME = {
+  super_admin:  '/super-admin',
+  admin_bimbel: '/admin/dashboard',
+  tutor:        '/tutor',
+  student:      '/student',
 }
 
 export default function AdminLayout({ children, lang, setLang }) {
   const { user, logout } = useAuth()
-  const navigate = useNavigate()
-  const location = useLocation()
+  const navigate  = useNavigate()
+  const location  = useLocation()
 
   const bimbelName = user?.tenant?.name || user?.tenant_name || 'Bimbel'
-  const userName = user?.name || 'Admin'
+  const userName   = user?.name || 'Admin'
+  const initials   = userName.split(' ').slice(0, 2).map((w) => w[0].toUpperCase()).join('')
 
-  const btnOn = 'h-8 min-w-[40px] px-3 rounded-full bg-[#0D47A1] text-white text-sm font-bold border-0 cursor-pointer'
-  const btnOff = 'h-8 min-w-[40px] px-3 rounded-full bg-transparent text-[#1F2937] text-sm font-bold border-0 cursor-pointer'
+  const btnOn  = 'h-8 min-w-[40px] px-3 rounded-full bg-[#0D47A1] text-white text-sm font-bold border-0 cursor-pointer transition-all'
+  const btnOff = 'h-8 min-w-[40px] px-3 rounded-full bg-transparent text-[#1F2937] text-sm font-bold border-0 cursor-pointer transition-all'
 
-  const handleLogout = () => {
-    logout()
+  const handleLogout = async () => {
+    await logout()
     navigate('/login')
   }
 
-  const navItems = NAV_ITEMS[lang]
+  const navGroups = NAV_GROUPS[lang]
 
   return (
     <div className="h-screen bg-[#F3F6FA] font-['Plus_Jakarta_Sans',system-ui,sans-serif] text-[#1F2937] flex flex-col overflow-hidden">
-      {/* Header */}
-      <header className="bg-white border-b border-[#E6E6EA] flex-none z-40">
-        <div className="px-6 py-3 flex flex-wrap items-center gap-3 gap-x-5">
-          <Link to="/" className="flex items-center no-underline flex-none">
-            <img src="/logo.png" alt="BIMS" className="h-10 w-auto object-contain" />
+
+      {/* ── Top header — floating pill style matching landing Navbar ── */}
+      <header className="flex-none z-40 px-4 pt-3 pb-2">
+        <div className="bg-white border border-[#E6E6EA] rounded-2xl shadow-[0_4px_24px_rgba(13,71,161,0.06)] px-5 py-2.5 flex items-center gap-4">
+
+          {/* Logo */}
+          <Link to={ROLE_HOME[user?.role] ?? '/admin/dashboard'} className="flex items-center no-underline flex-none">
+            <img src="/logo.png" alt="BIMS" className="h-9 w-auto object-contain" />
           </Link>
 
-          <span className="w-px h-7 bg-[#E6E6EA]" aria-hidden="true" />
+          <span className="w-px h-6 bg-[#E6E6EA] flex-none" aria-hidden="true" />
 
-          <div className="flex flex-col">
-            <span className="font-bold text-[15px]">{bimbelName}</span>
-            <span className="text-[12px] text-[#5F6368]">{userName} · Admin Bimbel</span>
+          {/* Bimbel info */}
+          <div className="flex flex-col min-w-0">
+            <span className="font-bold text-[14px] text-[#1F2937] truncate leading-tight">{bimbelName}</span>
+            <span className="text-[11px] text-[#5F6368] leading-tight">Admin Bimbel</span>
           </div>
 
           <div className="flex-1" />
@@ -62,49 +100,94 @@ export default function AdminLayout({ children, lang, setLang }) {
             <button type="button" onClick={() => setLang('id')} aria-pressed={lang === 'id'} className={lang === 'id' ? btnOn : btnOff}>ID</button>
           </div>
 
+          {/* Avatar + name */}
+          <div className="flex items-center gap-2.5 pl-1">
+            <div className="w-8 h-8 rounded-full bg-[#EEF4FF] text-[#0D47A1] flex items-center justify-center font-bold text-[12px] flex-none select-none">
+              {initials}
+            </div>
+            <span className="hidden sm:block text-[13px] font-semibold text-[#1F2937]">{userName}</span>
+          </div>
+
+          <span className="w-px h-6 bg-[#E6E6EA] flex-none" aria-hidden="true" />
+
+          {/* Logout */}
           <button
             type="button"
             onClick={handleLogout}
-            className="inline-flex items-center h-10 px-4 text-[#1F2937] font-semibold text-sm gap-2 rounded-xl hover:bg-[#F3F6FA] transition cursor-pointer border-0 bg-transparent"
+            aria-label={lang === 'id' ? 'Keluar' : 'Log out'}
+            title={lang === 'id' ? 'Keluar' : 'Log out'}
+            className="inline-flex items-center gap-1.5 h-9 px-3 text-[#5F6368] font-semibold text-sm rounded-xl hover:bg-[#FDE7E5] hover:text-[#8A1C12] transition cursor-pointer border-0 bg-transparent"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" className="flex-none">
+            <svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true" className="flex-none">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            {lang === 'id' ? 'Keluar' : 'Log out'}
+            <span className="hidden sm:block">{lang === 'id' ? 'Keluar' : 'Log out'}</span>
           </button>
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
+      {/* ── Body: sidebar + main ─────────────────────────────────────────── */}
+      <div className="flex flex-1 overflow-hidden px-4 pb-4 gap-3">
+
         {/* Sidebar */}
         <nav
-          aria-label="Admin"
-          className="w-[220px] flex-none bg-white border-r border-[#E6E6EA] p-4 flex flex-col gap-1 overflow-y-auto"
+          aria-label={lang === 'id' ? 'Menu Admin' : 'Admin menu'}
+          className="w-[210px] flex-none bg-white border border-[#E6E6EA] rounded-2xl shadow-[0_4px_24px_rgba(13,71,161,0.04)] p-3 flex flex-col gap-1 overflow-y-auto"
         >
-          {navItems.map((item) => {
-            const active = location.pathname === item.href
-            return (
-              <Link
-                key={item.label}
-                to={item.href}
-                className={`flex items-center gap-3 min-h-[44px] px-3.5 rounded-[10px] no-underline font-medium text-[15px] transition ${
-                  active
-                    ? 'bg-[#EEF4FF] text-[#0D47A1] font-bold'
-                    : 'text-[#1F2937] hover:bg-[#F3F6FA]'
-                }`}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" className="flex-none">
-                  <path d={item.icon} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          {navGroups.map((group, gi) => (
+            <div key={gi} className={gi > 0 ? 'mt-2' : ''}>
+              {/* Group label */}
+              {group.label && (
+                <span className="block px-3 mb-1 text-[11px] font-bold uppercase tracking-widest text-[#C7C7CF]">
+                  {group.label}
+                </span>
+              )}
+              {group.items.map((item) => {
+                const active = location.pathname === item.href
+                return (
+                  <Link
+                    key={item.label}
+                    to={item.href}
+                    className={`flex items-center gap-2.5 min-h-[40px] px-3 rounded-[10px] no-underline text-[14px] transition-all ${
+                      active
+                        ? 'bg-[#EEF4FF] text-[#0D47A1] font-bold'
+                        : 'text-[#4A4A55] font-medium hover:bg-[#F3F6FA] hover:text-[#1F2937]'
+                    }`}
+                  >
+                    <svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true" className="flex-none">
+                      <path d={item.icon} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    {item.label}
+                  </Link>
+                )
+              })}
+            </div>
+          ))}
+
+          {/* Bottom: plan info */}
+          <div className="mt-auto pt-3 border-t border-[#F2F2F5]">
+            <Link
+              to="/admin/invoices"
+              className="flex items-center gap-2.5 px-3 py-2.5 rounded-[10px] no-underline hover:bg-[#F3F6FA] transition-all group"
+            >
+              <span className="w-7 h-7 rounded-lg bg-[#EEF4FF] text-[#0D47A1] flex items-center justify-center flex-none">
+                <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
                 </svg>
-                {item.label}
-              </Link>
-            )
-          })}
+              </span>
+              <div className="flex flex-col min-w-0">
+                <span className="text-[12px] font-bold text-[#1F2937] truncate">{bimbelName}</span>
+                <span className="text-[11px] text-[#5F6368]">{lang === 'id' ? 'Lihat tagihan' : 'View invoices'}</span>
+              </div>
+            </Link>
+          </div>
         </nav>
 
         {/* Main content */}
-        <main className="flex-1 min-w-0 p-8 overflow-y-auto">
-          {children}
+        <main className="flex-1 min-w-0 overflow-y-auto">
+          <div className="min-h-full">
+            {children}
+          </div>
         </main>
       </div>
     </div>

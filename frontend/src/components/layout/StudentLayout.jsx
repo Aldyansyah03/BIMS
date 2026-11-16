@@ -16,6 +16,13 @@ const NAV_ITEMS = {
   ],
 }
 
+const ROLE_HOME = {
+  super_admin:  '/super-admin',
+  admin_bimbel: '/admin/dashboard',
+  tutor:        '/tutor',
+  student:      '/student',
+}
+
 export default function StudentLayout({ children, lang, setLang }) {
   const { logout, user } = useAuth()
   const navigate = useNavigate()
@@ -41,7 +48,7 @@ export default function StudentLayout({ children, lang, setLang }) {
       {/* Header */}
       <header className="bg-white border-b border-[#E6E6EA] flex-none z-40">
         <div className="max-w-[1200px] mx-auto px-6 py-3 flex flex-wrap items-center gap-3 gap-x-6">
-          <Link to="/" className="flex items-center no-underline flex-none">
+          <Link to={ROLE_HOME[user?.role] ?? '/student'} className="flex items-center no-underline flex-none">
             <img src="/logo.png" alt="BIMS" className="h-10 w-auto object-contain" />
           </Link>
 

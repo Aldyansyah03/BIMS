@@ -278,13 +278,37 @@ export default function TutorClass() {
 
   return (
     <TutorLayout lang={lang} setLang={setLang}>
-      <div className="max-w-[1200px] mx-auto px-6 py-7 pb-12 flex flex-col gap-6">
+      <div className="p-6 flex flex-col gap-6">
+
+        {/* ── Page header ───────────────────────────────────────────────── */}
+        <div className="flex flex-col gap-1">
+          <h1 className="m-0 text-[28px] font-extrabold tracking-[-0.02em]">
+            {lang === 'id' ? 'Kelas Saya' : 'My Classes'}
+          </h1>
+          <span className="text-sm text-[#5F6368]">
+            {lang === 'id' ? 'Kelola materi, ujian, dan hasil siswa' : 'Manage materials, exams and student results'}
+          </span>
+        </div>
 
         {/* ── Class selector / title ─────────────────────────────────────── */}
         {classesLoading ? (
           <Spinner />
         ) : classes.length === 0 ? (
-          <p className="text-[#5F6368]">{t.noClasses}</p>
+          <div className="bg-white border border-[#E6E6EA] rounded-[18px] p-12 flex flex-col items-center gap-4 text-center">
+            <span className="w-14 h-14 rounded-2xl bg-[#EEF4FF] text-[#0D47A1] flex items-center justify-center">
+              <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M2 4h20 M4 4v11a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V4 M12 16v4 M8 21h8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+            <p className="font-bold text-[17px] text-[#1F2937] m-0">
+              {lang === 'id' ? 'Belum ada kelas' : 'No classes yet'}
+            </p>
+            <p className="text-[14px] text-[#5F6368] max-w-[320px] m-0">
+              {lang === 'id'
+                ? 'Admin bimbel perlu menugaskan kamu ke kelas terlebih dahulu.'
+                : 'Your bimbel admin needs to assign you to a class first.'}
+            </p>
+          </div>
         ) : (
           <>
             {/* Class tabs when multiple classes */}

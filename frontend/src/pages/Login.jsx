@@ -10,10 +10,10 @@ const ROLE_REDIRECT = {
 }
 
 const DEV_USERS = [
-  { label: 'Super Admin', email: 'superadmin@bims.id' },
-  { label: 'Admin Bimbel', email: 'hendra@cahayailmu.id' },
-  { label: 'Tutor', email: 'rina@cahayailmu.id' },
-  { label: 'Siswa', email: 'aditya@cahayailmu.id' },
+  { label: 'Super Admin', email: 'superadmin@bims.com' },
+  { label: 'Admin Bimbel', email: 'admin@geya.com' },
+  { label: 'Tutor', email: 'tutor@geya.com' },
+  { label: 'Siswa', email: 'siswa@geya.com' },
 ]
 
 export default function Login() {

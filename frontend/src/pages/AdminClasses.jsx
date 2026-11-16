@@ -237,7 +237,7 @@ export default function AdminClasses() {
 
   return (
     <AdminLayout lang={lang} setLang={setLang}>
-      <div className="flex flex-wrap gap-6 items-start">
+      <div className="p-6 flex flex-wrap gap-6 items-start">
 
         {/* ── Left: class list ─────────────────────────────────────────────── */}
         <section aria-labelledby="cl-h" className="flex-1 min-w-[220px] max-w-[280px] flex flex-col gap-3">

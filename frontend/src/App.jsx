@@ -7,6 +7,7 @@ import Main from './pages/Main'
 import Register from './pages/Register'
 import AdminDashboard from './pages/AdminDashboard'
 import AdminClasses from './pages/AdminClasses'
+import AdminUsers from './pages/AdminUsers'
 import TutorClass from './pages/TutorClass'
 import StudentHome from './pages/StudentHome'
 import Exam from './pages/Exam'
@@ -88,7 +89,7 @@ function AppRoutes() {
       {/* Public */}
       <Route path="/" element={<Main />} />
       <Route path="/login"    element={<GuestRoute><Login /></GuestRoute>} />
-      <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
+      <Route path="/register" element={<Register />} />
 
       {/* Super Admin */}
       <Route path="/super-admin"          element={<ProtectedRoute allowedRoles={['super_admin']}><SuperAdmin /></ProtectedRoute>} />
@@ -98,6 +99,7 @@ function AppRoutes() {
       {/* Admin Bimbel */}
       <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={['admin_bimbel']}><AdminDashboard /></ProtectedRoute>} />
       <Route path="/admin/classes"   element={<ProtectedRoute allowedRoles={['admin_bimbel']}><AdminClasses /></ProtectedRoute>} />
+      <Route path="/admin/users"     element={<ProtectedRoute allowedRoles={['admin_bimbel']}><AdminUsers /></ProtectedRoute>} />
       <Route path="/admin/invoices"  element={<ProtectedRoute allowedRoles={['admin_bimbel']}><Invoices /></ProtectedRoute>} />
 
       {/* Tutor */}
