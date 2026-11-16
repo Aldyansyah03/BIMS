@@ -1,32 +1,46 @@
-# BIMS — Bimbel Management System
+# BIMS - Bimbel Integrated Management System
 
-Multi-tenant Learning Management System (LMS) untuk bimbingan belajar (Bimbel).
+Repositori ini memuat seluruh sistem BIMS yang mencakup:
+- **Backend**: Laravel 12 API (PHP 8.3) dengan Supabase PostgreSQL & Midtrans Payment Gateway.
+- **Frontend**: React 19 + Vite + Tailwind CSS (di dalam direktori `frontend/`).
 
-## Fitur Utama
-- **12 Layar Lengkap**: Landing page, Register bimbel, Workspace Status, Login multi-peran, Super Admin, Admin Bimbel (Dashboard, Jadwal, Kelas, Anggota), Tutor (Materi & Kelas), Siswa (Beranda, CBT Exam, Hasil Tryout), dan Matriks Akses Peran.
-- **Terintegrasi Supabase**: Autentikasi pendaftaran akun bimbel & login pengguna riil terhubung ke Supabase (`assets/supabase.js`).
-- **Dukungan Dua Bahasa**: Bahasa Indonesia (ID) & English (EN).
+---
 
-## Struktur File
-```text
-├── index.html            # Markup utama dengan template screens
-├── README.md             # Dokumentasi proyek
-├── README.txt            # Dokumentasi ringkas
-└── assets/
-    ├── app.js            # Runtime & interaksi layar
-    ├── styles.css        # Gaya dan styling global
-    ├── supabase.js       # Konfigurasi & client helper Supabase
-    └── logo.jpg          # Logo BIMS
+## Struktur Folder
+
+```
+├── app/                  # Controller, Models, Middleware Laravel
+├── bootstrap/            # Konfigurasi bootstrap Laravel
+├── config/               # File konfigurasi Laravel
+├── database/             # Migrasi & Seeder database
+├── routes/               # Routing API & Web
+├── api/                  # Serverless entrypoint untuk Vercel
+├── vercel.json           # Konfigurasi deployment Vercel
+├── frontend/             # Aplikasi Front End (React + Vite)
+│   ├── src/              # Komponen, Halaman, Services
+│   ├── public/           # Aset statis frontend
+│   └── package.json      # Dependensi frontend
+└── README.md
 ```
 
-## Cara Menjalankan
-1. **Langsung Buka**: Klik ganda file `index.html` pada browser.
-2. **Via Web Server Lokal**:
-   ```bash
-   # Menggunakan Python
-   python -m http.server 8000
+---
 
-   # Atau menggunakan Node.js
-   npx serve .
-   ```
-   Lalu buka di browser: `http://localhost:8000`
+## Menjalankan Proyek Secara Lokal
+
+### 1. Menjalankan Backend (Laravel)
+```bash
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+php artisan serve
+```
+Backend berjalan di: `http://localhost:8000`
+
+### 2. Menjalankan Frontend (React Vite)
+```bash
+cd frontend
+npm install
+npm run dev
+```
+Frontend berjalan di: `http://localhost:5173`
