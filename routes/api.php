@@ -2,9 +2,11 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ClassroomController;
+use App\Http\Controllers\Api\ExamController;
 use App\Http\Controllers\Api\PackageController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ScheduleController;
+use App\Http\Controllers\Api\StudentExamController;
 use App\Http\Controllers\Api\SubjectController;
 use App\Http\Controllers\Api\TenantApprovalController;
 use App\Http\Controllers\Api\UserController;
@@ -85,4 +87,32 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/schedules', [ScheduleController::class, 'index']);
     Route::get('/schedules/{id}', [ScheduleController::class, 'show']);
+
+    // ========== FITUR CBT ONLINE & EVALUASI NILAI (MODUL 5 & 6) ==========
+    // Khusus Tutor, Admin Bimbel, Super Admin
+    Route::middleware('role:tutor,admin_bimbel,super_admin')->group(function () {
+        Route::get('/exams', [ExamController::class, 'index']);
+        Route::post('/exams', [ExamController::class, 'store']);
+        Route::get('/exams/{id}', [ExamController::class, 'show']);
+        Route::put('/exams/{id}', [ExamController::class, 'update']);
+        Route::delete('/exams/{id}', [ExamController::class, 'destroy']);
+        Route::patch('/exams/{id}/publish', [ExamController::class, 'togglePublish']);
+
+        // Bank Soal
+        Route::get('/exams/{id}/questions', [ExamController::class, 'getQuestions']);
+        Route::post('/exams/{id}/questions', [ExamController::class, 'addQuestion']);
+        Route::delete('/exams/{id}/questions/{questionId}', [ExamController::class, 'deleteQuestion']);
+
+        // Rekap Nilai
+        Route::get('/exams/{id}/results', [ExamController::class, 'getResults']);
+    });
+
+    // Khusus Siswa
+    Route::middleware('role:siswa')->prefix('student')->group(function () {
+        Route::get('/exams', [StudentExamController::class, 'index']);
+        Route::post('/exams/{id}/start', [StudentExamController::class, 'start']);
+        Route::get('/exams/{id}/questions', [StudentExamController::class, 'getQuestions']);
+        Route::post('/exams/{id}/answer', [StudentExamController::class, 'saveAnswer']);
+        Route::post('/exams/{id}/submit', [StudentExamController::class, 'submit']);
+    });
 });
