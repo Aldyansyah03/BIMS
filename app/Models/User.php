@@ -59,4 +59,15 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Tenant::class);
     }
+
+    public function classrooms()
+    {
+        return $this->belongsToMany(Classroom::class, 'classroom_members')
+            ->withPivot(['id', 'role_in_class', 'joined_at']);
+    }
+
+    public function schedules()
+    {
+        return $this->hasMany(Schedule::class, 'tutor_id');
+    }
 }

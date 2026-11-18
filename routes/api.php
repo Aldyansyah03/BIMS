@@ -1,8 +1,11 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ClassroomController;
 use App\Http\Controllers\Api\PackageController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\ScheduleController;
+use App\Http\Controllers\Api\SubjectController;
 use App\Http\Controllers\Api\TenantApprovalController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
@@ -49,5 +52,36 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::patch('/users/{id}/reset-password', [UserController::class, 'resetPassword']);
             Route::delete('/users/{id}', [UserController::class, 'destroy']);
         });
+
+        // Subjects CRUD
+        Route::post('/subjects', [SubjectController::class, 'store']);
+        Route::put('/subjects/{id}', [SubjectController::class, 'update']);
+        Route::delete('/subjects/{id}', [SubjectController::class, 'destroy']);
+
+        // Classrooms CRUD
+        Route::post('/classrooms', [ClassroomController::class, 'store']);
+        Route::put('/classrooms/{id}', [ClassroomController::class, 'update']);
+        Route::delete('/classrooms/{id}', [ClassroomController::class, 'destroy']);
+
+        // Classroom Members (ER-3.1)
+        Route::post('/classrooms/{id}/members', [ClassroomController::class, 'addMember']);
+        Route::delete('/classrooms/{id}/members/{userId}', [ClassroomController::class, 'removeMember']);
+
+        // Schedules CRUD (ER-3.2)
+        Route::post('/schedules', [ScheduleController::class, 'store']);
+        Route::put('/schedules/{id}', [ScheduleController::class, 'update']);
+        Route::delete('/schedules/{id}', [ScheduleController::class, 'destroy']);
     });
+
+    // ========== FITUR AKADEMIK & MANAJEMEN PEMBELAJARAN (MODUL 3) ==========
+    // Endpoint Baca (Admin, Tutor, Siswa)
+    Route::get('/subjects', [SubjectController::class, 'index']);
+    Route::get('/subjects/{id}', [SubjectController::class, 'show']);
+
+    Route::get('/classrooms', [ClassroomController::class, 'index']);
+    Route::get('/classrooms/{id}', [ClassroomController::class, 'show']);
+    Route::get('/classrooms/{id}/members', [ClassroomController::class, 'getMembers']);
+
+    Route::get('/schedules', [ScheduleController::class, 'index']);
+    Route::get('/schedules/{id}', [ScheduleController::class, 'show']);
 });
