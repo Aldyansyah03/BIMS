@@ -1,8 +1,8 @@
+# Laravel Backend
 *.log
 .DS_Store
 .env
-.env.backup
-.env.production
+.env.*
 .phpactor.json
 .phpunit.result.cache
 /.codex
@@ -28,3 +28,9 @@ Thumbs.db
 /database/*.sqlite
 /database/*.sqlite-journal
 postgres
+
+# React Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env.*.local

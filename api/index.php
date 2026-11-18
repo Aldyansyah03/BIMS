@@ -23,4 +23,3 @@ $_SERVER['SCRIPT_FILENAME'] = __DIR__ . '/../public/index.php';
 
 // Teruskan eksekusi ke index.php publik milik Laravel
 require __DIR__ . '/../public/index.php';
-
