@@ -1,0 +1,172 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
+use App\Models\Classroom;
+use App\Models\Material;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+
+class MaterialController extends Controller
+{
+    /**
+     * Ambil daftar materi per kelas (Tutor / Siswa / Admin).
+     * Sesuai format tutorService.js -> getMaterials(classId)
+     */
+    public function getMaterialsByClass($classId)
+    {
+        $classroom = Classroom::find($classId);
+
+        if (!$classroom) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Kelas tidak ditemukan.',
+            ], 404);
+        }
+
+        $materials = Material::where('classroom_id', $classroom->id)
+            ->with('tutor:id,name,email')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data'    => $materials,
+        ], 200);
+    }
+
+    /**
+     * Unggah / terbitkan materi baru (PDF atau Tautan Video).
+     * Sesuai format tutorService.js -> publishMaterial(classId, formData)
+     * Aturan ER-4.1: Validasi mime-type application/pdf dan ukuran maksimal 20 MB (20480 KB).
+     */
+    public function publishMaterial(Request $request, $classId)
+    {
+        $classroom = Classroom::find($classId);
+
+        if (!$classroom) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Kelas tidak ditemukan.',
+            ], 404);
+        }
+
+        $request->validate([
+            'title'     => 'required|string|max:200',
+            'file'      => 'nullable|file|mimes:pdf|max:20480', // Maksimal 20 MB - ER-4.1
+            'video_url' => 'nullable|url|max:255',
+        ], [
+            'file.mimes' => 'Format berkas harus berupa dokumen PDF.',
+            'file.max'   => 'Ukuran file PDF melebihi batas maksimal 20 MB (ER-4.1).',
+            'video_url.url' => 'Tautan video harus berupa URL yang valid (https://...).',
+        ]);
+
+        if (!$request->hasFile('file') && !$request->filled('video_url')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Silakan unggah berkas PDF atau masukkan tautan video pembelajaran.',
+            ], 422);
+        }
+
+        $user = auth()->user();
+        $filePath = null;
+        $fileSizeKb = null;
+        $type = 'video';
+
+        if ($request->hasFile('file')) {
+            $type = 'pdf';
+            $file = $request->file('file');
+            $filePath = $file->store('materials', 'public');
+            $fileSizeKb = (int) round($file->getSize() / 1024);
+        }
+
+        $material = Material::create([
+            'tenant_id'    => $classroom->tenant_id,
+            'classroom_id' => $classroom->id,
+            'tutor_id'     => $user->id,
+            'title'        => $request->title,
+            'type'         => $type,
+            'file_path'    => $filePath,
+            'video_url'    => $request->video_url,
+            'file_size_kb' => $fileSizeKb,
+        ]);
+
+        // Catat Audit Trail (MR-7)
+        ActivityLog::record('UPLOAD_MATERIAL', [
+            'material_id'  => $material->id,
+            'classroom_id' => $classroom->id,
+            'title'        => $material->title,
+            'type'         => $material->type,
+        ], $user);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Materi pembelajaran berhasil diterbitkan.',
+            'data'    => $material->load('tutor:id,name'),
+        ], 201);
+    }
+
+    /**
+     * Hapus materi belajar.
+     * Sesuai format tutorService.js -> deleteMaterial(materialId)
+     */
+    public function deleteMaterial($materialId)
+    {
+        $material = Material::find($materialId);
+
+        if (!$material) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Materi tidak ditemukan.',
+            ], 404);
+        }
+
+        // Hapus file fisik jika berupa PDF
+        if ($material->file_path && Storage::disk('public')->exists($material->file_path)) {
+            Storage::disk('public')->delete($material->file_path);
+        }
+
+        $materialIdSaved = $material->id;
+        $titleSaved = $material->title;
+        $material->delete();
+
+        // Catat Audit Trail (MR-7)
+        ActivityLog::record('DELETE_MATERIAL', [
+            'material_id' => $materialIdSaved,
+            'title'       => $titleSaved,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Materi berhasil dihapus.',
+        ], 200);
+    }
+
+    /**
+     * Daftar materi terbaru untuk siswa di seluruh kelas yang diikutinya.
+     * Sesuai format studentService.js -> getMyMaterials(limit)
+     */
+    public function getStudentMaterials(Request $request)
+    {
+        $user = auth()->user();
+        $limit = (int) $request->query('limit', 10);
+
+        // Ambil kelas yang diikuti oleh siswa
+        $classroomIds = $user->classrooms()
+            ->wherePivot('role_in_class', 'siswa')
+            ->pluck('classrooms.id');
+
+        $materials = Material::with(['classroom:id,name', 'tutor:id,name'])
+            ->whereIn('classroom_id', $classroomIds)
+            ->orderBy('created_at', 'desc')
+            ->take($limit)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data'    => $materials,
+        ], 200);
+    }
+}

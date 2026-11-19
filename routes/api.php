@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ClassroomController;
 use App\Http\Controllers\Api\ExamController;
 use App\Http\Controllers\Api\ExamResultController;
+use App\Http\Controllers\Api\MaterialController;
 use App\Http\Controllers\Api\PackageController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ScheduleController;
@@ -120,10 +121,19 @@ Route::middleware('auth:sanctum')->group(function () {
         // Hasil Ujian Siswa (MR-6)
         Route::get('/exam-results', [ExamResultController::class, 'getStudentHistory']);
         Route::get('/exam-results/{resultId}', [ExamResultController::class, 'getStudentResult']);
+
+        // Materi Belajar Siswa (MR-4)
+        Route::get('/materials', [MaterialController::class, 'getStudentMaterials']);
     });
 
-    // ========== FITUR REKAP KELAS & TUTOR (MODUL 6) ==========
+    // ========== FITUR DISTRIBUSI MATERI & REKAP KELAS TUTOR (MODUL 4 & 6) ==========
     Route::middleware('role:tutor,admin_bimbel,super_admin')->prefix('tutor')->group(function () {
+        // Materi Belajar (MR-4)
+        Route::get('/classes/{classId}/materials', [MaterialController::class, 'getMaterialsByClass']);
+        Route::post('/classes/{classId}/materials', [MaterialController::class, 'publishMaterial']);
+        Route::delete('/materials/{materialId}', [MaterialController::class, 'deleteMaterial']);
+
+        // Rekap Nilai (MR-6)
         Route::get('/classes/{classId}/results', [ExamResultController::class, 'getClassResults']);
         Route::get('/classes/{classId}/results/export', [ExamResultController::class, 'exportClassResults']);
     });
