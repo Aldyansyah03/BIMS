@@ -78,7 +78,8 @@ class MaterialController extends Controller
         if ($request->hasFile('file')) {
             $type = 'pdf';
             $file = $request->file('file');
-            $filePath = $file->store('materials', 'public');
+            $disk = config('filesystems.default') === 's3' || env('FILESYSTEM_DISK') === 's3' ? 's3' : 'public';
+            $filePath = $file->store('materials', $disk);
             $fileSizeKb = (int) round($file->getSize() / 1024);
         }
 
@@ -124,8 +125,9 @@ class MaterialController extends Controller
         }
 
         // Hapus file fisik jika berupa PDF
-        if ($material->file_path && Storage::disk('public')->exists($material->file_path)) {
-            Storage::disk('public')->delete($material->file_path);
+        $disk = config('filesystems.default') === 's3' || env('FILESYSTEM_DISK') === 's3' ? 's3' : 'public';
+        if ($material->file_path && Storage::disk($disk)->exists($material->file_path)) {
+            Storage::disk($disk)->delete($material->file_path);
         }
 
         $materialIdSaved = $material->id;

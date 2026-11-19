@@ -51,7 +51,8 @@ class Material extends Model
                 if (filter_var($this->file_path, FILTER_VALIDATE_URL)) {
                     return $this->file_path;
                 }
-                return Storage::disk('public')->url($this->file_path);
+                $disk = config('filesystems.default') === 's3' || env('FILESYSTEM_DISK') === 's3' ? 's3' : 'public';
+                return Storage::disk($disk)->url($this->file_path);
             }
         );
     }
