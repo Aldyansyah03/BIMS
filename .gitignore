@@ -29,8 +29,11 @@ Thumbs.db
 /database/*.sqlite-journal
 postgres
 
-# React Frontend (Not tracked in BackEnd branch)
-frontend/
+# React Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env.*.local
 
 # Documentation & Local Exports
 *.pdf
