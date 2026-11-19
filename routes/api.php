@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ClassroomController;
 use App\Http\Controllers\Api\ExamController;
+use App\Http\Controllers\Api\ExamResultController;
 use App\Http\Controllers\Api\PackageController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ScheduleController;
@@ -114,5 +116,25 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/exams/{id}/questions', [StudentExamController::class, 'getQuestions']);
         Route::post('/exams/{id}/answer', [StudentExamController::class, 'saveAnswer']);
         Route::post('/exams/{id}/submit', [StudentExamController::class, 'submit']);
+
+        // Hasil Ujian Siswa (MR-6)
+        Route::get('/exam-results', [ExamResultController::class, 'getStudentHistory']);
+        Route::get('/exam-results/{resultId}', [ExamResultController::class, 'getStudentResult']);
+    });
+
+    // ========== FITUR REKAP KELAS & TUTOR (MODUL 6) ==========
+    Route::middleware('role:tutor,admin_bimbel,super_admin')->prefix('tutor')->group(function () {
+        Route::get('/classes/{classId}/results', [ExamResultController::class, 'getClassResults']);
+        Route::get('/classes/{classId}/results/export', [ExamResultController::class, 'exportClassResults']);
+    });
+
+    // ========== FITUR DASHBOARD & AUDIT LOG ADMIN (MODUL 6 & 7) ==========
+    Route::middleware('role:admin_bimbel,super_admin')->prefix('admin')->group(function () {
+        Route::get('/dashboard', [ExamResultController::class, 'getAdminDashboard']);
+        Route::get('/performance/export', [ExamResultController::class, 'exportPerformance']);
+
+        // Audit Trail & Activity Logs (MR-7)
+        Route::get('/activity-logs', [ActivityLogController::class, 'index']);
+        Route::get('/activity-logs/{id}', [ActivityLogController::class, 'show']);
     });
 });

@@ -83,6 +83,12 @@ class ExamController extends Controller
 
         $exam = Exam::create($examData);
 
+        // Catat Audit Trail (MR-7)
+        \App\Models\ActivityLog::record('CREATE_EXAM', [
+            'exam_id' => $exam->id,
+            'title'   => $exam->title,
+        ], $user);
+
         return response()->json([
             'success' => true,
             'message' => 'Paket ujian CBT berhasil dibuat.',
@@ -189,6 +195,12 @@ class ExamController extends Controller
 
         $exam->is_published = !$exam->is_published;
         $exam->save();
+
+        // Catat Audit Trail (MR-7)
+        \App\Models\ActivityLog::record($exam->is_published ? 'PUBLISH_EXAM' : 'UNPUBLISH_EXAM', [
+            'exam_id' => $exam->id,
+            'title'   => $exam->title,
+        ]);
 
         return response()->json([
             'success' => true,

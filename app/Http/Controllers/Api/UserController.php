@@ -167,6 +167,14 @@ class UserController extends Controller
 
         $user = User::create($userData);
 
+        // Catat Audit Trail (MR-7)
+        \App\Models\ActivityLog::record('CREATE_USER', [
+            'created_user_id' => $user->id,
+            'role'            => $user->role,
+            'name'            => $user->name,
+            'email'           => $user->email,
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => "Akun {$user->role} atas nama {$user->name} berhasil dibuat.",

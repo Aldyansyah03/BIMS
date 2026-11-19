@@ -48,6 +48,9 @@ class AuthController extends Controller
         // 4. Generate Sanctum Token
         $token = $user->createToken('auth-token')->plainTextToken;
 
+        // Catat Audit Trail (MR-7)
+        \App\Models\ActivityLog::record('LOGIN', ['email' => $user->email], $user);
+
         return response()->json([
             'success' => true,
             'message' => 'Login berhasil.',
@@ -75,8 +78,11 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        // Hapus token saat ini
-        $request->user()->currentAccessToken()->delete();
+        if ($request->user()) {
+            \App\Models\ActivityLog::record('LOGOUT', ['email' => $request->user()->email], $request->user());
+            // Hapus token saat ini
+            $request->user()->currentAccessToken()->delete();
+        }
 
         return response()->json([
             'success' => true,

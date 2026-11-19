@@ -346,10 +346,20 @@ class StudentExamController extends Controller
                 ]
             );
 
+            // Catat Audit Trail (MR-7)
+            \App\Models\ActivityLog::record('SUBMIT_EXAM', [
+                'exam_id'         => $exam->id,
+                'exam_title'      => $exam->title,
+                'score'           => $score,
+                'total_questions' => $totalQuestions,
+                'correct_answers' => $correctAnswers,
+            ], $user);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Ujian berhasil diselesaikan.',
                 'data'    => [
+                    'result_id'       => $examResult->id,
                     'exam_id'         => $exam->id,
                     'exam_title'      => $exam->title,
                     'total_questions' => $totalQuestions,
