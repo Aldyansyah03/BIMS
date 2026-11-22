@@ -148,8 +148,9 @@ class AuthController extends Controller
             'created_at'  => now()->toIso8601String(),
         ];
 
-        Cache::put("pending_reg_token_{$verificationToken}", $pendingData, now()->addHours(24));
-        Cache::put("pending_reg_email_{$emailClean}", $verificationToken, now()->addHours(24));
+        $cache = $this->cacheStore();
+        $cache->put("pending_reg_token_{$verificationToken}", $pendingData, now()->addHours(24));
+        $cache->put("pending_reg_email_{$emailClean}", $verificationToken, now()->addHours(24));
 
         // Kirim email verifikasi ke alamat email calon pengguna
         try {
@@ -211,7 +212,8 @@ class AuthController extends Controller
         }
 
         // 2. Ambil data registrasi pending dari Cache staging
-        $pendingData = Cache::get("pending_reg_token_{$token}");
+        $cache = $this->cacheStore();
+        $pendingData = $cache->get("pending_reg_token_{$token}");
 
         if (!$pendingData || strtolower(trim($pendingData['email'])) !== $email) {
             return response()->json([
@@ -283,8 +285,8 @@ class AuthController extends Controller
             }
 
             // Hapus data sementara dari Cache staging
-            Cache::forget("pending_reg_token_{$token}");
-            Cache::forget("pending_reg_email_{$email}");
+            $this->cacheStore()->forget("pending_reg_token_{$token}");
+            $this->cacheStore()->forget("pending_reg_email_{$email}");
 
             // Buat sanctum token agar sesi pengguna langsung aktif ke langkah pembayaran
             $authToken = $user->createToken('auth-token')->plainTextToken;
@@ -328,8 +330,9 @@ class AuthController extends Controller
         }
 
         // 2. Cek data di Cache staging
-        $token = Cache::get("pending_reg_email_{$email}");
-        $pendingData = $token ? Cache::get("pending_reg_token_{$token}") : null;
+        $cache = $this->cacheStore();
+        $token = $cache->get("pending_reg_email_{$email}");
+        $pendingData = $token ? $cache->get("pending_reg_token_{$token}") : null;
 
         if (!$pendingData) {
             return response()->json([
@@ -339,13 +342,13 @@ class AuthController extends Controller
         }
 
         // Perbarui token verifikasi baru di Cache
-        Cache::forget("pending_reg_token_{$token}");
+        $cache->forget("pending_reg_token_{$token}");
 
         $newToken = Str::random(64);
         $pendingData['token'] = $newToken;
 
-        Cache::put("pending_reg_token_{$newToken}", $pendingData, now()->addHours(24));
-        Cache::put("pending_reg_email_{$email}", $newToken, now()->addHours(24));
+        $cache->put("pending_reg_token_{$newToken}", $pendingData, now()->addHours(24));
+        $cache->put("pending_reg_email_{$email}", $newToken, now()->addHours(24));
 
         try {
             Notification::route('mail', $email)
@@ -649,5 +652,20 @@ class AuthController extends Controller
         // 3. Fallback: simpan di public disk lokal
         $path = $file->store('logos', 'public');
         return '/storage/' . $path;
+    }
+
+    /**
+     * Dapatkan cache store yang persisten lintas invocation serverless (database store di Supabase).
+     */
+    protected function cacheStore()
+    {
+        if (app()->environment('testing')) {
+            return Cache::store();
+        }
+        try {
+            return Cache::store('database');
+        } catch (\Throwable $e) {
+            return Cache::store();
+        }
     }
 }
