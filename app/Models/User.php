@@ -19,6 +19,11 @@ class User extends Authenticatable
         'role',
         'phone',
         'is_active',
+        'email_verified_at',
+        'verification_token',
+        'onboarding_step',
+        'onboarding_completed',
+        'welcome_shown',
     ];
 
     public function isSuperAdmin(): bool
@@ -58,6 +63,11 @@ class User extends Authenticatable
     public function tenant()
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    public function subscriptions()
+    {
+        return $this->hasMany(Subscription::class);
     }
 
     public function classrooms()

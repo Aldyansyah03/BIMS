@@ -18,7 +18,11 @@ use Illuminate\Support\Facades\Route;
 // Endpoint Publik
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/register', [AuthController::class, 'register']);
+Route::post('/verify-email', [AuthController::class, 'verifyEmail']);
+Route::post('/resend-verification', [AuthController::class, 'resendVerification']);
+Route::post('/check-email-verified', [AuthController::class, 'checkEmailVerified']);
 Route::post('/register/initiate', [PaymentController::class, 'initiateRegistration']); // Inisiasi pembayaran tanpa simpan ke DB
+Route::post('/payment/confirm-registration', [PaymentController::class, 'confirmRegistration']); // Konfirmasi pembayaran client
 Route::get('/packages', [PackageController::class, 'index']);
 Route::post('/midtrans-callback', [PaymentController::class, 'callback']);
 
@@ -26,7 +30,14 @@ Route::post('/midtrans-callback', [PaymentController::class, 'callback']);
 Route::middleware('auth:sanctum')->group(function () {
     // Profil & Sesi
     Route::get('/me', [AuthController::class, 'me']);
+    Route::put('/profile', [AuthController::class, 'updateProfile']);
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/user/dismiss-welcome', [AuthController::class, 'dismissWelcome']);
+
+    // Alur Onboarding (Verifikasi -> Pembayaran -> Profil)
+    Route::post('/payment/checkout-registration', [PaymentController::class, 'checkoutRegistration']);
+    Route::post('/payment/check-registration', [PaymentController::class, 'checkRegistrationPayment']);
+    Route::post('/complete-profile', [AuthController::class, 'completeProfile']);
 
     // ========== FITUR INVOICE & LANGGANAN (MODUL 1) ==========
     Route::post('/checkout', [PaymentController::class, 'checkout']);
