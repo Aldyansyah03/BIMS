@@ -14,12 +14,41 @@ class VerifyEmailNotification extends Notification
     public string $verificationUrl;
     public string $recipientName;
 
-    public function __construct(string $token, string $email, string $recipientName = 'Pengguna BIMS')
+    public function __construct(string $token, string $email, string $recipientName = 'Pengguna BIMS', ?string $frontendUrl = null)
     {
         $this->token = $token;
         $this->recipientName = $recipientName;
-        $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
-        $this->verificationUrl = "{$frontendUrl}/verify-email?token={$token}&email=" . urlencode($email);
+        $base = self::resolveFrontendUrl($frontendUrl);
+        $this->verificationUrl = "{$base}/verify-email?token={$token}&email=" . urlencode($email);
+    }
+
+    public static function resolveFrontendUrl(?string $customUrl = null): string
+    {
+        if (!empty($customUrl)) {
+            return rtrim($customUrl, '/');
+        }
+
+        $envUrl = env('FRONTEND_URL');
+        if (!empty($envUrl) && $envUrl !== 'http://localhost:5173') {
+            return rtrim($envUrl, '/');
+        }
+
+        if (request() && !app()->environment('testing')) {
+            $origin = request()->header('Origin') ?: request()->header('Referer');
+            if (!empty($origin)) {
+                $parsed = parse_url($origin);
+                if (!empty($parsed['scheme']) && !empty($parsed['host'])) {
+                    $port = !empty($parsed['port']) ? ':' . $parsed['port'] : '';
+                    return "{$parsed['scheme']}://{$parsed['host']}{$port}";
+                }
+            }
+        }
+
+        if (app()->environment('production') || env('VERCEL') || !empty($_SERVER['VERCEL'])) {
+            return 'https://bims-lms.vercel.app';
+        }
+
+        return !empty($envUrl) ? rtrim($envUrl, '/') : 'http://localhost:5173';
     }
 
     public function via(object $notifiable): array

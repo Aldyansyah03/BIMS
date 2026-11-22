@@ -159,7 +159,7 @@ class AuthController extends Controller
             Log::warning("Gagal mengirim email verifikasi ke {$request->email}: " . $e->getMessage());
         }
 
-        $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
+        $frontendUrl = VerifyEmailNotification::resolveFrontendUrl();
         $verificationUrl = "{$frontendUrl}/verify-email?token={$verificationToken}&email=" . urlencode($request->email);
 
         $responseData = [
@@ -354,7 +354,7 @@ class AuthController extends Controller
             Log::warning("Gagal kirim ulang email verifikasi: " . $e->getMessage());
         }
 
-        $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
+        $frontendUrl = VerifyEmailNotification::resolveFrontendUrl();
         $verificationUrl = "{$frontendUrl}/verify-email?token={$newToken}&email=" . urlencode($email);
 
         $responseData = [
