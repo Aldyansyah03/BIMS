@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
@@ -602,11 +603,40 @@ class AuthController extends Controller
     }
 
     /**
-     * Simpan file logo ke storage (Supabase S3 jika credentials tersedia, atau disk public lokal)
+     * Simpan file logo ke storage (Supabase Storage bucket 'materials' via REST API, S3, atau public disk)
      */
     protected function storeLogoFile($file): string
     {
-        // 1. Coba upload ke Supabase bucket S3 jika S3 dikonfigurasi dan memiliki Key
+        // 1. Coba upload langsung ke Supabase Storage via REST API (bucket 'materials', folder 'logos')
+        $supabaseUrl = env('SUPABASE_URL', 'https://isxkzbrswxqdlswmupzt.supabase.co');
+        $supabaseKey = env('SUPABASE_ANON_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzeGt6YnJzd3hxZGxzd211cHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4OTA2MzUsImV4cCI6MjEwODQ2NjYzNX0.QezwvGIg3iqhJzwAmz_0PceU2nKYibuUflN_bE1vDOM');
+        $bucket = env('AWS_BUCKET', 'materials');
+
+        if (!app()->environment('testing') && !empty($supabaseUrl) && !empty($supabaseKey)) {
+            try {
+                $ext = $file->getClientOriginalExtension() ?: 'png';
+                $filename = 'logos/' . Str::uuid() . '.' . $ext;
+                $endpoint = rtrim($supabaseUrl, '/') . "/storage/v1/object/{$bucket}/{$filename}";
+                $mimeType = $file->getMimeType() ?: 'image/png';
+
+                $response = Http::withHeaders([
+                    'apikey'        => $supabaseKey,
+                    'Authorization' => 'Bearer ' . $supabaseKey,
+                    'Content-Type'  => $mimeType,
+                ])->withBody(file_get_contents($file->getRealPath()), $mimeType)
+                  ->post($endpoint);
+
+                if ($response->successful()) {
+                    return rtrim($supabaseUrl, '/') . "/storage/v1/object/public/{$bucket}/{$filename}";
+                }
+
+                Log::warning('Supabase Storage REST upload gagal: ' . $response->body());
+            } catch (\Throwable $e) {
+                Log::warning('Supabase Storage exception: ' . $e->getMessage());
+            }
+        }
+
+        // 2. Coba upload ke Supabase bucket S3 jika S3 dikonfigurasi dan memiliki Key
         if (config('filesystems.default') === 's3' && !empty(config('filesystems.disks.s3.key'))) {
             try {
                 $path = $file->store('logos', 's3');
@@ -616,7 +646,7 @@ class AuthController extends Controller
             }
         }
 
-        // 2. Default: simpan di public disk lokal
+        // 3. Fallback: simpan di public disk lokal
         $path = $file->store('logos', 'public');
         return '/storage/' . $path;
     }

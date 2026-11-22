@@ -32,25 +32,7 @@ class Tenant extends Model
      */
     public function getLogoUrlAttribute(): ?string
     {
-        $rawLogo = $this->attributes['logo'] ?? null;
-        if (empty($rawLogo)) {
-            return null;
-        }
-
-        if (filter_var($rawLogo, FILTER_VALIDATE_URL)) {
-            return $rawLogo;
-        }
-
-        // Jika terhubung ke bucket Supabase S3 dan diawali dengan materials/ atau logos/
-        $supabaseBucketUrl = env('AWS_URL');
-        if (!empty($supabaseBucketUrl) && !str_starts_with($rawLogo, '/storage/')) {
-            return rtrim($supabaseBucketUrl, '/') . '/' . ltrim($rawLogo, '/');
-        }
-
-        $backendUrl = config('app.url', 'http://127.0.0.1:8000');
-        $cleanPath = str_starts_with($rawLogo, '/storage/') ? $rawLogo : '/storage/' . ltrim($rawLogo, '/');
-
-        return rtrim($backendUrl, '/') . $cleanPath;
+        return $this->getLogoAttribute($this->attributes['logo'] ?? null);
     }
 
     /**
@@ -66,9 +48,18 @@ class Tenant extends Model
             return $value;
         }
 
-        $backendUrl = config('app.url', 'http://127.0.0.1:8000');
-        $cleanPath = str_starts_with($value, '/storage/') ? $value : '/storage/' . ltrim($value, '/');
+        $supabaseBucketUrl = env('AWS_URL', 'https://isxkzbrswxqdlswmupzt.supabase.co/storage/v1/object/public/materials');
+        $cleanPath = ltrim(preg_replace('/^\/?storage\//', '', $value), '/');
 
-        return rtrim($backendUrl, '/') . $cleanPath;
+        // Jika diawali dengan logos/ atau materials/, arahkan langsung ke Supabase Storage publik
+        if (str_starts_with($cleanPath, 'logos/') || str_starts_with($cleanPath, 'materials/')) {
+            return rtrim($supabaseBucketUrl, '/') . '/' . $cleanPath;
+        }
+
+        $backendUrl = config('app.url') && config('app.url') !== 'http://localhost'
+            ? config('app.url')
+            : (env('APP_URL') ?: 'https://bims-bice.vercel.app');
+
+        return rtrim($backendUrl, '/') . '/storage/' . $cleanPath;
     }
 }

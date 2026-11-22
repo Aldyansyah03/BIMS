@@ -45,8 +45,14 @@ api.interceptors.response.use(
 // Resolusi URL gambar/logo (Supabase Storage / local storage / relative path)
 export const getImageUrl = (path) => {
   if (!path) return null
+  if (typeof path !== 'string') return path
+
+  // Jika URL mengarah ke localhost/127.0.0.1 lama, bersihkan agar mengarah ke host yang benar
+  if (path.includes('localhost:8000') || path.includes('127.0.0.1:8000')) {
+    path = path.replace(/^https?:\/\/(localhost|127\.0\.0\.1):8000/, '')
+  }
+
   if (
-    typeof path !== 'string' ||
     path.startsWith('http://') ||
     path.startsWith('https://') ||
     path.startsWith('blob:') ||

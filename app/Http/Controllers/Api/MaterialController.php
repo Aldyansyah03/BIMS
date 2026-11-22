@@ -7,7 +7,10 @@ use App\Models\ActivityLog;
 use App\Models\Classroom;
 use App\Models\Material;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class MaterialController extends Controller
 {
@@ -78,9 +81,42 @@ class MaterialController extends Controller
         if ($request->hasFile('file')) {
             $type = 'pdf';
             $file = $request->file('file');
-            $disk = config('filesystems.default') === 's3' || env('FILESYSTEM_DISK') === 's3' ? 's3' : 'public';
-            $filePath = $file->store('materials', $disk);
             $fileSizeKb = (int) round($file->getSize() / 1024);
+
+            // 1. Upload langsung ke Supabase Storage via REST API (bucket 'materials') jika bukan di environment testing
+            $supabaseUrl = env('SUPABASE_URL', 'https://isxkzbrswxqdlswmupzt.supabase.co');
+            $supabaseKey = env('SUPABASE_ANON_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzeGt6YnJzd3hxZGxzd211cHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4OTA2MzUsImV4cCI6MjEwODQ2NjYzNX0.QezwvGIg3iqhJzwAmz_0PceU2nKYibuUflN_bE1vDOM');
+            $bucket = env('AWS_BUCKET', 'materials');
+
+            if (!app()->environment('testing') && !empty($supabaseUrl) && !empty($supabaseKey)) {
+                try {
+                    $ext = $file->getClientOriginalExtension() ?: 'pdf';
+                    $filename = 'materials/' . Str::uuid() . '.' . $ext;
+                    $endpoint = rtrim($supabaseUrl, '/') . "/storage/v1/object/{$bucket}/{$filename}";
+                    $mimeType = $file->getMimeType() ?: 'application/pdf';
+
+                    $response = Http::withHeaders([
+                        'apikey'        => $supabaseKey,
+                        'Authorization' => 'Bearer ' . $supabaseKey,
+                        'Content-Type'  => $mimeType,
+                    ])->withBody(file_get_contents($file->getRealPath()), $mimeType)
+                      ->post($endpoint);
+
+                    if ($response->successful()) {
+                        $filePath = rtrim($supabaseUrl, '/') . "/storage/v1/object/public/{$bucket}/{$filename}";
+                    } else {
+                        Log::warning('Supabase Storage Material upload gagal: ' . $response->body());
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('Supabase Storage Material upload exception: ' . $e->getMessage());
+                }
+            }
+
+            // 2. Fallback ke disk S3 atau local public disk
+            if (!$filePath) {
+                $disk = config('filesystems.default') === 's3' && !empty(config('filesystems.disks.s3.key')) ? 's3' : 'public';
+                $filePath = $file->store('materials', $disk);
+            }
         }
 
         $material = Material::create([
