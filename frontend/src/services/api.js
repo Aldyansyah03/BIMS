@@ -1,7 +1,11 @@
 import axios from 'axios'
 
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.DEV ? 'http://127.0.0.1:8000/api' : 'https://bims-bice.vercel.app/api')
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api',
+  baseURL: API_BASE,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -50,7 +54,7 @@ export const getImageUrl = (path) => {
   ) {
     return path
   }
-  const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api'
+  const apiBase = API_BASE
   const backendBase = apiBase.replace(/\/api\/?$/, '')
   let cleanPath = path.startsWith('/') ? path : `/${path}`
   if (!cleanPath.startsWith('/storage/')) {
