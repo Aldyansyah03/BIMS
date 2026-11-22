@@ -23,11 +23,13 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [errorCode, setErrorCode] = useState(null)
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+    setErrorCode(null)
     if (!email || !password) {
       setError('Masukkan email dan kata sandi.')
       return
@@ -35,10 +37,21 @@ export default function Login() {
     setLoading(true)
     try {
       const user = await login(email, password)
+      const status = (user.tenant?.status || user.workspace_status || '').toLowerCase()
+      if (user.role !== 'super_admin' && (status === 'menunggu' || status === 'pending')) {
+        navigate('/workspace-status', { replace: true })
+        return
+      }
+      if (user.role === 'admin_bimbel') {
+        const slug = user.tenant?.slug || (user.tenant?.name ? user.tenant.name.toLowerCase().replace(/\s+/g, '-') : '')
+        navigate(slug ? `/${slug}/admin/dashboard` : '/admin/dashboard', { replace: true })
+        return
+      }
       const redirect = ROLE_REDIRECT[user.role] || '/student'
       navigate(redirect, { replace: true })
     } catch (err) {
       setError(err.message || 'Login gagal. Coba lagi.')
+      setErrorCode(err.statusCode || null)
     } finally {
       setLoading(false)
     }
@@ -116,11 +129,25 @@ export default function Login() {
             </div>
 
             {error && (
-              <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-semibold flex items-center gap-2">
-                <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" className="flex-none">
-                  <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z M12 9v4 M12 17h.01" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                {error}
+              <div className={`px-4 py-3.5 rounded-xl border text-sm font-semibold flex flex-col gap-2 ${
+                errorCode === 'TENANT_PENDING'
+                  ? 'bg-amber-50 border-amber-200 text-amber-900'
+                  : 'bg-red-50 border-red-200 text-red-700'
+              }`}>
+                <div className="flex items-start gap-2">
+                  <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" className="flex-none mt-0.5">
+                    <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z M12 9v4 M12 17h.01" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <span>{error}</span>
+                </div>
+                {errorCode === 'TENANT_PENDING' && (
+                  <Link
+                    to="/workspace-status"
+                    className="inline-flex items-center text-xs font-bold text-[#0D47A1] underline hover:text-[#0a3880]"
+                  >
+                    Buka Halaman Status Ruang Kerja →
+                  </Link>
+                )}
               </div>
             )}
 

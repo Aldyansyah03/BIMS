@@ -1,8 +1,11 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../hooks/useAuth'
 
 export default function Navbar({ t, lang, setLang }) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
 
   const btnOn = 'h-8 min-w-[40px] px-3 rounded-full bg-[#0D47A1] text-white text-sm font-bold border-0 cursor-pointer transition-all'
   const btnOff = 'h-8 min-w-[40px] px-3 rounded-full bg-transparent text-[#1F2937] text-sm font-bold border-0 cursor-pointer transition-all'
@@ -14,6 +17,28 @@ export default function Navbar({ t, lang, setLang }) {
     { label: t.navPricing, href: '#pricing' },
     { label: 'FAQ', href: '#faq' },
   ]
+
+  // Hitung tautan dashboard pengguna
+  const userSlug = user?.tenant?.slug || (user?.tenant?.name ? user.tenant.name.toLowerCase().replace(/\s+/g, '-') : '')
+  const dashboardUrl =
+    user?.role === 'super_admin'
+      ? '/super-admin'
+      : user?.role === 'admin_bimbel'
+      ? (userSlug ? `/${userSlug}/admin/dashboard` : '/admin/dashboard')
+      : user?.role === 'tutor'
+      ? '/tutor'
+      : user?.role === 'siswa' || user?.role === 'student'
+      ? '/student'
+      : '/'
+
+  const userName = user?.name || 'Pengguna'
+  const initials = userName.split(' ').slice(0, 2).map((w) => w[0]?.toUpperCase()).join('') || 'U'
+
+  const handleLogout = async () => {
+    await logout()
+    setMenuOpen(false)
+    navigate('/')
+  }
 
   return (
     <header className="sticky top-0 z-50 px-4 pt-4 pb-1" style={{ willChange: 'transform' }}>
@@ -42,7 +67,7 @@ export default function Navbar({ t, lang, setLang }) {
           <div className="flex-1 md:hidden" />
 
           {/* Right side */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             {/* Language toggle */}
             <div role="group" aria-label="Language / Bahasa"
               className="flex gap-0.5 p-[3px] border border-[#E6E6EA] rounded-full items-center bg-[#F3F6FA]">
@@ -50,17 +75,49 @@ export default function Navbar({ t, lang, setLang }) {
               <button type="button" onClick={() => setLang('id')} aria-pressed={lang === 'id'} className={lang === 'id' ? btnOn : btnOff}>ID</button>
             </div>
 
-            {/* Desktop: Login + Register */}
             <span className="hidden md:block w-px h-5 bg-[#E6E6EA]" aria-hidden="true" />
-            <Link to="/login" className="hidden md:inline-flex items-center h-9 px-4 rounded-xl text-[#1F2937] no-underline font-semibold text-sm hover:bg-[#F7F7F8] transition-all">
-              {t.login}
-            </Link>
-            <Link to="/register" className="hidden md:inline-flex items-center h-9 px-4 rounded-xl bg-[#0D47A1] text-white no-underline font-bold text-sm hover:bg-[#0a3880] transition-all gap-1.5">
-              {t.register}
-              <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" className="flex-none">
-                <path d="M5 12h14 M13 6l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </Link>
+
+            {/* Jika User Sudah Login: Tampilkan Profil & Tombol Keluar */}
+            {user ? (
+              <div className="hidden md:flex items-center gap-2">
+                <Link
+                  to={dashboardUrl}
+                  className="flex items-center gap-2 h-9 px-3 rounded-xl bg-[#EEF4FF] hover:bg-[#DCEBFF] text-[#0D47A1] no-underline transition font-bold text-xs shadow-sm"
+                  title="Masuk ke Ruang Kerja / Dasbor"
+                >
+                  <span className="w-6 h-6 rounded-full bg-[#0D47A1] text-white flex items-center justify-center font-bold text-[10px]">
+                    {initials}
+                  </span>
+                  <span className="truncate max-w-[120px]">{userName}</span>
+                  <span className="text-[11px] font-semibold text-[#0D47A1]/80">· Dasbor →</span>
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl border border-[#E6E6EA] hover:border-[#F87171] hover:bg-[#FEE2E2] text-[#5F6368] hover:text-[#8A1C12] transition cursor-pointer text-xs font-semibold bg-white"
+                  title={lang === 'id' ? 'Keluar dari akun' : 'Log out'}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9" />
+                  </svg>
+                  <span>{lang === 'id' ? 'Keluar' : 'Log out'}</span>
+                </button>
+              </div>
+            ) : (
+              /* Jika Belum Login: Tampilkan Masuk & Daftar */
+              <div className="hidden md:flex items-center gap-2">
+                <Link to="/login" className="inline-flex items-center h-9 px-4 rounded-xl text-[#1F2937] no-underline font-semibold text-sm hover:bg-[#F7F7F8] transition-all">
+                  {t.login}
+                </Link>
+                <Link to="/register" className="inline-flex items-center h-9 px-4 rounded-xl bg-[#0D47A1] text-white no-underline font-bold text-sm hover:bg-[#0a3880] transition-all gap-1.5">
+                  {t.register}
+                  <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" className="flex-none">
+                    <path d="M5 12h14 M13 6l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </Link>
+              </div>
+            )}
 
             {/* Mobile: hamburger */}
             <button
@@ -94,15 +151,37 @@ export default function Navbar({ t, lang, setLang }) {
                 {link.label}
               </a>
             ))}
-            <div className="flex gap-2 mt-2 pt-2 border-t border-[#E6E6EA]">
-              <Link to="/login" onClick={() => setMenuOpen(false)}
-                className="flex-1 flex items-center justify-center h-11 rounded-xl border border-[#0D47A1] text-[#0D47A1] no-underline font-bold text-sm hover:bg-[#EEF4FF] transition">
-                {t.login}
-              </Link>
-              <Link to="/register" onClick={() => setMenuOpen(false)}
-                className="flex-1 flex items-center justify-center h-11 rounded-xl bg-[#0D47A1] text-white no-underline font-bold text-sm hover:bg-[#0a3880] transition">
-                {t.register}
-              </Link>
+
+            <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-[#E6E6EA]">
+              {user ? (
+                <>
+                  <Link
+                    to={dashboardUrl}
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center justify-center gap-2 h-11 rounded-xl bg-[#0D47A1] text-white no-underline font-bold text-sm shadow-sm"
+                  >
+                    <span>Masuk ke Dasbor ({userName})</span>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="flex items-center justify-center gap-2 h-11 rounded-xl border border-[#E6E6EA] hover:bg-[#FEE2E2] text-[#B91C1C] font-bold text-sm transition bg-white"
+                  >
+                    <span>{lang === 'id' ? 'Keluar dari Akun' : 'Log out'}</span>
+                  </button>
+                </>
+              ) : (
+                <div className="flex gap-2">
+                  <Link to="/login" onClick={() => setMenuOpen(false)}
+                    className="flex-1 flex items-center justify-center h-11 rounded-xl border border-[#0D47A1] text-[#0D47A1] no-underline font-bold text-sm hover:bg-[#EEF4FF] transition">
+                    {t.login}
+                  </Link>
+                  <Link to="/register" onClick={() => setMenuOpen(false)}
+                    className="flex-1 flex items-center justify-center h-11 rounded-xl bg-[#0D47A1] text-white no-underline font-bold text-sm hover:bg-[#0a3880] transition">
+                    {t.register}
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         )}

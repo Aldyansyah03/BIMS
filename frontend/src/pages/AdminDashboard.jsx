@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import AdminLayout from '../components/layout/AdminLayout'
 import { getDashboard, createSession, getAdminClasses, getAdminTutors, exportPerformance } from '../services/adminService'
 import { useAuth } from '../hooks/useAuth'
+import api from '../services/api'
 
 // ── Icon paths ────────────────────────────────────────────────────────────────
 const ICONS = {
@@ -91,8 +92,29 @@ function fmtT(v) {
 export default function AdminDashboard() {
   const [lang, setLang] = useState('id')
   const t = TEXT[lang]
-  const { user } = useAuth()
+  const { user, setUser } = useAuth()
   const bimbelName = user?.tenant?.name || user?.tenant_name || 'Bimbel'
+
+  // Modal Notifikasi Sambutan Pertama Kali (Welcome Modal)
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false)
+
+  useEffect(() => {
+    if (user && user.welcome_shown === false) {
+      setShowWelcomeModal(true)
+    }
+  }, [user])
+
+  const handleDismissWelcome = async () => {
+    setShowWelcomeModal(false)
+    try {
+      await api.post('/user/dismiss-welcome')
+      const updatedUser = { ...user, welcome_shown: true }
+      localStorage.setItem('user', JSON.stringify(updatedUser))
+      if (setUser) setUser(updatedUser)
+    } catch (err) {
+      console.warn('Gagal dismiss welcome modal:', err)
+    }
+  }
 
   // ── Dashboard data ───────────────────────────────────────────────────────────
   const [dash, setDash] = useState(null)
@@ -579,6 +601,48 @@ export default function AdminDashboard() {
         )}
       </section>
       </div>  {/* end p-6 wrapper */}
+
+      {/* ========== MODAL SAMBUTAN PENDAFTARAN SELESAI (1 KALI TAMPIL) ========== */}
+      {showWelcomeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl text-center border border-[#E6E6EA] transform transition-all animate-in zoom-in-95 duration-200">
+            <div className="w-16 h-16 rounded-2xl bg-[#EFF6FF] text-[#0D47A1] text-3xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+              🎉
+            </div>
+
+            <h2 className="text-2xl font-black text-[#1F2937] tracking-tight mb-3">
+              Selamat Datang di BIMS! 🎉
+            </h2>
+
+            <p className="text-sm sm:text-[15px] text-[#4A4A55] leading-relaxed mb-6 font-medium">
+              Registrasi akun Anda berhasil. Pembayaran telah dikonfirmasi dan profil Anda sudah lengkap. Sekarang Anda dapat mulai menggunakan seluruh fitur Dashboard Admin BIMS.
+            </p>
+
+            <div className="grid grid-cols-3 gap-2 bg-[#F3F6FA] rounded-2xl p-3 mb-6 text-xs text-[#1E6B3A] font-bold">
+              <div className="flex flex-col items-center gap-1">
+                <span>✓</span>
+                <span className="text-[11px] text-[#4A4A55]">Email Valid</span>
+              </div>
+              <div className="flex flex-col items-center gap-1">
+                <span>✓</span>
+                <span className="text-[11px] text-[#4A4A55]">Pembayaran Lunas</span>
+              </div>
+              <div className="flex flex-col items-center gap-1">
+                <span>✓</span>
+                <span className="text-[11px] text-[#4A4A55]">Ruang Kerja Aktif</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleDismissWelcome}
+              className="w-full py-3.5 px-6 bg-[#0D47A1] hover:bg-[#0A3880] text-white font-extrabold text-base rounded-xl transition shadow-lg shadow-[#0D47A1]/20 flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>Mulai Kelola Bimbel Sekarang →</span>
+            </button>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   )
 }
