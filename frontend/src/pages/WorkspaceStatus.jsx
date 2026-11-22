@@ -129,20 +129,56 @@ export default function WorkspaceStatus() {
   const [wsStatus, setWsStatus]     = useState(null)   // data dari BE
   const [statusLoading, setStatusLoading] = useState(true)
 
-  useEffect(() => {
-    // Cek status workspace dari BE
-    api.get('/workspace/status')
+  const checkStatus = () => {
+    setStatusLoading(true)
+    api.get('/me')
       .then((r) => {
-        const data = r.data.data ?? r.data
-        // BE diharapkan return: { status: 'pending'|'expired'|'rejected'|'denied'|'active', ... }
-        if (data?.status && data.status !== 'active') {
-          setWsStatus(data)
+        const userData = r.data.data ?? r.data
+        const tenant = userData?.tenant
+        if (tenant?.status) {
+          const raw = (tenant.status || '').toLowerCase()
+          let mapped = 'pending'
+          if (raw === 'aktif' || raw === 'active') mapped = 'active'
+          else if (raw === 'ditolak' || raw === 'rejected') mapped = 'rejected'
+          else if (raw === 'nonaktif' || raw === 'expired') mapped = 'expired'
+          else if (raw === 'menunggu' || raw === 'pending') mapped = 'pending'
+
+          if (mapped === 'active') {
+            const slug = tenant?.slug || (tenant?.name ? tenant.name.toLowerCase().replace(/\s+/g, '-') : '')
+            navigate(slug ? `/${slug}/admin/dashboard` : '/admin/dashboard', { replace: true })
+            return
+          }
+
+          setWsStatus({
+            status: mapped,
+            tenant_name: tenant.name,
+          })
+          setS(mapped)
         }
       })
-      .catch(() => {
-        // Jika gagal fetch (misalnya user tidak login), gunakan state default
-      })
+      .catch(() => {})
       .finally(() => setStatusLoading(false))
+  }
+
+  useEffect(() => {
+    checkStatus()
+
+    // Polling berkala jika statusnya masih pending / menunggu
+    const interval = setInterval(() => {
+      api.get('/me')
+        .then((r) => {
+          const userData = r.data.data ?? r.data
+          const tenant = userData?.tenant
+          const raw = (tenant?.status || '').toLowerCase()
+          if (raw === 'aktif' || raw === 'active') {
+            const slug = tenant?.slug || (tenant?.name ? tenant.name.toLowerCase().replace(/\s+/g, '-') : '')
+            navigate(slug ? `/${slug}/admin/dashboard` : '/admin/dashboard', { replace: true })
+          }
+        })
+        .catch(() => {})
+    }, 3000)
+
+    return () => clearInterval(interval)
   }, [])
 
   // Untuk prototype: bisa switch manual, tapi status real dari BE diutamakan
@@ -227,7 +263,11 @@ export default function WorkspaceStatus() {
           </span>
 
           <h1 className="m-0 text-[30px] font-extrabold tracking-[-0.02em] leading-snug">{cur.title}</h1>
-          <p className="m-0 text-base leading-relaxed text-[#4A4A55]">{cur.body}</p>
+          <p className="m-0 text-base leading-relaxed text-[#4A4A55]">
+            {activeState === 'pending' && wsStatus?.tenant_name
+              ? `${wsStatus.tenant_name} terdaftar pada sistem BIMS. Ruang kerja Anda saat ini dalam status terkunci dan akan aktif setelah disetujui Super Admin.`
+              : cur.body}
+          </p>
 
           {/* Renewal info — hanya untuk expired */}
           {activeState === 'expired' && (
@@ -249,12 +289,23 @@ export default function WorkspaceStatus() {
 
           {/* CTA buttons */}
           <div className="flex flex-wrap gap-2.5">
-            <Link
-              to={cur.href}
-              className="inline-flex items-center h-12 px-5 rounded-xl bg-[#0D47A1] text-white no-underline font-bold hover:bg-[#0a3880] transition"
-            >
-              {cur.cta}
-            </Link>
+            {activeState === 'pending' ? (
+              <button
+                type="button"
+                onClick={checkStatus}
+                disabled={statusLoading}
+                className="inline-flex items-center h-12 px-5 rounded-xl bg-[#0D47A1] text-white font-bold hover:bg-[#0a3880] transition cursor-pointer border-0 disabled:opacity-50"
+              >
+                {statusLoading ? 'Memeriksa...' : '🔄 Cek Status Persetujuan'}
+              </button>
+            ) : (
+              <Link
+                to={cur.href}
+                className="inline-flex items-center h-12 px-5 rounded-xl bg-[#0D47A1] text-white no-underline font-bold hover:bg-[#0a3880] transition"
+              >
+                {cur.cta}
+              </Link>
+            )}
             <button
               type="button"
               className="h-12 px-[18px] rounded-xl border border-[#1F2937] bg-white text-[#1F2937] font-bold text-[15px] cursor-pointer hover:bg-[#F3F6FA] transition"
