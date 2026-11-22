@@ -16,6 +16,8 @@
   "env": {
     "APP_ENV": "production",
     "APP_DEBUG": "true",
+    "APP_URL": "https://bims-bice.vercel.app",
+    "FRONTEND_URL": "https://bims-lms.vercel.app",
     "APP_CONFIG_CACHE": "/tmp/bootstrap/cache/config.php",
     "APP_EVENTS_CACHE": "/tmp/bootstrap/cache/events.php",
     "APP_PACKAGES_CACHE": "/tmp/bootstrap/cache/packages.php",
