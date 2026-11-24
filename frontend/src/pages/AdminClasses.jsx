@@ -3,19 +3,42 @@ import AdminLayout from '../components/layout/AdminLayout'
 import api from '../services/api'
 
 // ── API helpers ───────────────────────────────────────────────────────────────
-// Semua endpoint menggunakan prefix /admin/* yang sudah didaftarkan di routes/api.php
-const getClasses         = ()          => api.get('/admin/classes')
-const getClassMembers    = (id)        => api.get(`/admin/classes/${id}/students`)
-const getClassTutors     = (id)        => api.get(`/admin/classes/${id}/tutors`)
-const updateClass        = (id, body)  => api.put(`/admin/classes/${id}`, body)
-const createClass        = (body)      => api.post('/admin/classes', body)
-const deleteClass        = (id)        => api.delete(`/admin/classes/${id}`)
-const addStudents        = (id, ids)   => api.post(`/admin/classes/${id}/students`, { student_ids: ids })
-const searchStudents     = (q)         => api.get('/admin/students/search', { params: { q } })
-const getAllTutors        = ()          => api.get('/admin/tutors')
-const assignTutor        = (id, tid)   => api.post(`/admin/classes/${id}/tutors`, { tutor_id: tid })
-const removeTutorFromCls = (id, tid)   => api.delete(`/admin/classes/${id}/tutors/${tid}`)
-const toggleMemberStatus = (uid)       => api.patch(`/admin/students/${uid}/toggle-active`)
+// Menggunakan route standar /classrooms dan /users yang sudah ada di backend
+const getClasses         = ()           => api.get('/classrooms')
+const getClassDetail     = (id)         => api.get(`/classrooms/${id}`)
+const updateClass        = (id, body)   => api.put(`/classrooms/${id}`, body)
+const createClass        = (body)       => api.post('/classrooms', body)
+const deleteClass        = (id)         => api.delete(`/classrooms/${id}`)
+
+// Anggota kelas — via /classrooms/:id/members (GET) dan /classrooms/:id/members (POST)
+const getClassMembers    = (id)         => api.get(`/classrooms/${id}/members`)
+const addMemberToClass   = (id, userId, role) =>
+  api.post(`/classrooms/${id}/members`, { user_id: userId, role_in_class: role })
+const removeMemberFromClass = (id, userId) => api.delete(`/classrooms/${id}/members/${userId}`)
+
+// Tambah banyak siswa sekaligus — loop ke /classrooms/:id/members
+const addStudents = async (classId, studentIds) => {
+  await Promise.allSettled(
+    studentIds.map(uid =>
+      api.post(`/classrooms/${classId}/members`, { user_id: uid, role_in_class: 'siswa' })
+    )
+  )
+  return { data: { success: true } }
+}
+
+// Cari siswa — via /users?role=siswa&search=q
+const searchStudents     = (q)          => api.get('/users', { params: { role: 'siswa', search: q } })
+
+// Daftar tutor — via /users?role=tutor
+const getAllTutors        = ()           => api.get('/users', { params: { role: 'tutor' } })
+
+// Tugaskan tutor ke kelas
+const assignTutor        = (id, tid)    =>
+  api.post(`/classrooms/${id}/members`, { user_id: tid, role_in_class: 'tutor' })
+const removeTutorFromCls = (id, tid)    => api.delete(`/classrooms/${id}/members/${tid}`)
+
+// Toggle status user
+const toggleMemberStatus = (uid)        => api.patch(`/admin/users/${uid}/toggle-active`)
 
 // ── Text strings ──────────────────────────────────────────────────────────────
 const TEXT = {
@@ -105,14 +128,25 @@ export default function AdminClasses() {
     if (!classId) return
     setMembersLoading(true)
     setTutorsLoading(true)
+    // Ambil semua member lalu pisah siswa & tutor dari satu endpoint
     getClassMembers(classId)
-      .then((r) => setMembers(r.data.data ?? r.data ?? []))
-      .catch(() => setMembers([]))
-      .finally(() => setMembersLoading(false))
-    getClassTutors(classId)
-      .then((r) => setClassTutors(r.data.data ?? r.data ?? []))
-      .catch(() => setClassTutors([]))
-      .finally(() => setTutorsLoading(false))
+      .then((r) => {
+        const raw = r.data.data ?? r.data ?? []
+        // Response /classrooms/:id/members punya format { members: [...] } atau array langsung
+        const members = Array.isArray(raw) ? raw : (raw.members ?? [])
+        // Normalisasi — tiap member bisa punya nested user atau flat
+        const normalized = members.map(m => m.user ?? m)
+        const students = normalized.filter(m =>
+          (m.role_in_class ?? m.pivot?.role_in_class) === 'siswa'
+        )
+        const tutors = normalized.filter(m =>
+          (m.role_in_class ?? m.pivot?.role_in_class) === 'tutor'
+        )
+        setMembers(students)
+        setClassTutors(tutors)
+      })
+      .catch(() => { setMembers([]); setClassTutors([]) })
+      .finally(() => { setMembersLoading(false); setTutorsLoading(false) })
   }, [])
 
   useEffect(() => {
@@ -185,14 +219,25 @@ export default function AdminClasses() {
     setCreating(true)
     setCreateError('')
     try {
-      await createClass({ name: newName.trim(), academic_year: acYear, subject: newSubject.trim() })
+      await createClass({ name: newName.trim(), academic_year: acYear, subject: newSubject.trim() || undefined })
       setShowNew(false)
       setNewName('')
       setNewSubject('')
       setNewAcYear('')
       loadClasses()
     } catch (err) {
-      const msg = err.response?.data?.message ?? err.message ?? 'Gagal membuat kelas.'
+      // Tangkap semua kemungkinan format error dari Laravel
+      const data = err.response?.data
+      let msg = 'Gagal membuat kelas.'
+      if (data?.message) {
+        msg = data.message
+      } else if (data?.errors) {
+        // Laravel validation errors: { errors: { field: ['msg'] } }
+        const firstKey = Object.keys(data.errors)[0]
+        msg = data.errors[firstKey]?.[0] ?? msg
+      } else if (err.message) {
+        msg = err.message
+      }
       setCreateError(msg)
     }
     finally { setCreating(false) }
@@ -250,19 +295,21 @@ export default function AdminClasses() {
     } catch { /* silent */ }
   }
 
-  // ── Add tutor dropdown ───────────────────────────────────────────────────────
+  // ── Add tutor dropdown ───────────��────────────────────────────────────────────
   const [allTutors, setAllTutors]       = useState([])
   const [showAddTutor, setShowAddTutor] = useState(false)
   const [selTutorId, setSelTutorId]     = useState('')
 
   useEffect(() => {
-    getAllTutors().then((r) => setAllTutors(r.data.data ?? r.data ?? [])).catch(() => {})
+    getAllTutors()
+      .then((r) => setAllTutors(r.data.data ?? r.data ?? []))
+      .catch(() => {})
   }, [])
 
   const handleAddTutor = async () => {
     if (!selClass || !selTutorId) return
     try {
-      await assignTutor(selClass.id, selTutorId)
+      await assignTutor(selClass.id, Number(selTutorId))
       setShowAddTutor(false)
       setSelTutorId('')
       loadDetail(selClass.id)
